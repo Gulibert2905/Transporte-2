@@ -1,0 +1,38 @@
+{
+  "development": {
+    "username": "root",
+    "password": "Kasami17.",
+    "database": "cemedic",
+    "host": "127.0.0.1",
+    "dialect": "mysql",
+    "dialectOptions": {
+      "dateStrings": true,
+      "typeCast": true
+    },
+    "timezone": "+00:00"
+  },
+  "test": {
+    "username": "root",
+    "password": "Kasami17.",
+    "database": "cemedic_test",
+    "host": "127.0.0.1",
+    "dialect": "mysql",
+    "dialectOptions": {
+      "dateStrings": true,
+      "typeCast": true
+    },
+    "timezone": "+00:00"
+  },
+  "production": {
+    "username": "root",
+    "password": "Kasami17.",
+    "database": "cemedic_production",
+    "host": "127.0.0.1",
+    "dialect": "mysql",
+    "dialectOptions": {
+      "dateStrings": true,
+      "typeCast": true
+    },
+    "timezone": "+00:00"
+  }
+}
