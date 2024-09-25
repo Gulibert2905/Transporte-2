@@ -8,6 +8,14 @@ const db = require('./models');
 
 const app = express();
 
+if (process.env.NODE_ENV !== 'production') {
+  app.use(cors());
+} else {
+  app.use(cors({
+    origin: 'https://tu-dominio-de-produccion.com'
+  }));
+}
+
 // Middleware
 
 app.use(cors());
@@ -30,6 +38,8 @@ const tarifasRoutes = require('./routes/tarifasRoutes');
 const viajesRoutes = require('./routes/viajesRoutes');
 const reporteRoutes = require('./routes/reporteRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
+const contabilidadRoutes = require('./routes/contabilidadRoutes');
+
 // Log de modelos cargados
 console.log('Modelos cargados:', Object.keys(db));
 
@@ -41,6 +51,7 @@ app.use('/api/viajes', viajesRoutes);
 app.use('/api/reportes', reporteRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api', authRoutes);
+app.use('/api/contabilidad', contabilidadRoutes);
 
 
 
