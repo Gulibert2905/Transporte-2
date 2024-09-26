@@ -39,7 +39,12 @@ const viajesRoutes = require('./routes/viajesRoutes');
 const reporteRoutes = require('./routes/reporteRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
 const contabilidadRoutes = require('./routes/contabilidadRoutes');
-
+const nominaRoutes = require('./routes/nominaRoutes');
+const comprobanteEgresoRoutes = require('./routes/comprobanteEgresoRoutes');
+const reciboCajaRoutes = require('./routes/reciboCajaRoutes');
+const facturaCompraRoutes = require('./routes/facturaCompraRoutes');
+const notaDebitoCreditoRoutes = require('./routes/notaDebitoCreditoRoutes');
+const notaContabilidadRoutes = require('./routes/notaContabilidadRoutes');
 // Log de modelos cargados
 console.log('Modelos cargados:', Object.keys(db));
 
@@ -51,6 +56,12 @@ app.use('/api/viajes', viajesRoutes);
 app.use('/api/reportes', reporteRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/contabilidad', contabilidadRoutes);
+app.use('/api/nominas', nominaRoutes);
+app.use('/api/comprobantes-egreso', comprobanteEgresoRoutes);
+app.use('/api/recibos-caja', reciboCajaRoutes);
+app.use('/api/facturas-compra', facturaCompraRoutes);
+app.use('/api/notas-debito-credito', notaDebitoCreditoRoutes);
+app.use('/api/notas-contabilidad', notaContabilidadRoutes);
 app.use('/api', authRoutes);
 
 
