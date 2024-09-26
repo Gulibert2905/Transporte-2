@@ -1,0 +1,46 @@
+.select-user-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    background-color: #f0f2f5;
+  }
+  
+  .select-user-container h2 {
+    margin-bottom: 20px;
+    color: #333;
+  }
+  
+  .user-buttons {
+    display: flex;
+    gap: 10px;
+  }
+  
+  .user-buttons button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s ease;
+  }
+  
+  .user-buttons button:nth-child(1) {
+    background-color: #28a745;
+    color: white;
+  }
+  
+  .user-buttons button:nth-child(2) {
+    background-color: #17a2b8;
+    color: white;
+  }
+  
+  .user-buttons button:nth-child(3) {
+    background-color: #ffc107;
+    color: black;
+  }
+  
+  .user-buttons button:hover {
+    opacity: 0.9;
+  }

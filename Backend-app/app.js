@@ -18,7 +18,7 @@ if (process.env.NODE_ENV !== 'production') {
 
 // Middleware
 
-app.use(cors());
+
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.json());
@@ -50,15 +50,14 @@ app.use('/api/tarifas', tarifasRoutes);
 app.use('/api/viajes', viajesRoutes);
 app.use('/api/reportes', reporteRoutes);
 app.use('/api/dashboard', dashboardRoutes);
-app.use('/api', authRoutes);
 app.use('/api/contabilidad', contabilidadRoutes);
-
+app.use('/api', authRoutes);
 
 
 
 const PORT = process.env.PORT || 3000;
 
-db.sequelize.authenticate()
+db.sequelize.sync({ alter: false })
   .then(() => {
     console.log('Conexión a la base de datos establecida correctamente.');
     return db.sequelize.sync({ alter: true });
