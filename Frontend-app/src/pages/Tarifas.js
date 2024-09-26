@@ -1,6 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import './Tarifas.css';
+import {
+  Container,
+  Typography,
+  TextField,
+  Button,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  Grid,
+  Snackbar,
+  Alert,
+  Pagination
+} from '@mui/material';
 
 function Tarifas() {
   const [tarifasData, setTarifasData] = useState({
@@ -85,86 +105,113 @@ function Tarifas() {
   if (loading) return <div>Cargando...</div>;
 
   return (
-    <div className="tarifas-container">
-      <h2>Tarifas</h2>
+    <Container maxWidth="lg">
+      <Typography variant="h4" gutterBottom>Tarifas</Typography>
       
-      {error && <div className="error-message">{error}</div>}
-      {success && <div className="success-message">{success}</div>}
+      <Snackbar open={!!error} autoHideDuration={6000} onClose={() => setError(null)}>
+        <Alert onClose={() => setError(null)} severity="error" sx={{ width: '100%' }}>
+          {error}
+        </Alert>
+      </Snackbar>
 
-      <form onSubmit={handleSubmit}>
-        <select
-          name="prestador_nit"
-          value={newTarifa.prestador_nit}
-          onChange={handleInputChange}
-          required
-        >
-          <option value="">Seleccione un prestador</option>
-          {prestadores.map((prestador) => (
-            <option key={prestador.nit} value={prestador.nit}>
-              {prestador.nombre}
-            </option>
-          ))}
-        </select>
-        <select
-          name="ruta_id"
-          value={newTarifa.ruta_id}
-          onChange={handleInputChange}
-          required
-        >
-          <option value="">Seleccione una ruta</option>
-          {rutas.map((ruta) => (
-            <option key={ruta.id} value={ruta.id}>
-              {ruta.origen} - {ruta.destino}
-            </option>
-          ))}
-        </select>
-        <input
-          type="number"
-          name="tarifa"
-          placeholder="Tarifa"
-          value={newTarifa.tarifa}
-          onChange={handleInputChange}
-          required
-        />
-        <button type="submit">Añadir Tarifa</button>
-      </form>
+      <Snackbar open={!!success} autoHideDuration={6000} onClose={() => setSuccess(null)}>
+        <Alert onClose={() => setSuccess(null)} severity="success" sx={{ width: '100%' }}>
+          {success}
+        </Alert>
+      </Snackbar>
 
-      <table>
-        <thead>
-          <tr>
-            <th>Prestador</th>
-            <th>Ruta</th>
-            <th>Tarifa</th>
-          </tr>
-        </thead>
-        <tbody>
-          {tarifasData.tarifas.map((tarifa) => (
-            <tr key={tarifa.id}>
-              <td>{tarifa.prestador_nombre || tarifa.Prestador?.nombre || 'N/A'}</td>
-              <td>{(tarifa.origen && tarifa.destino) ? `${tarifa.origen} - ${tarifa.destino}` : 
-                  (tarifa.Ruta ? `${tarifa.Ruta.origen} - ${tarifa.Ruta.destino}` : 'N/A')}</td>
-              <td>${tarifa.tarifa}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <Paper elevation={3} sx={{ p: 2, mb: 2 }}>
+        <form onSubmit={handleSubmit}>
+          <Grid container spacing={2}>
+            <Grid item xs={12} sm={4}>
+              <FormControl fullWidth>
+                <InputLabel>Prestador</InputLabel>
+                <Select
+                  name="prestador_nit"
+                  value={newTarifa.prestador_nit}
+                  onChange={handleInputChange}
+                  required
+                >
+                  <MenuItem value="">Seleccione un prestador</MenuItem>
+                  {prestadores.map((prestador) => (
+                    <MenuItem key={prestador.nit} value={prestador.nit}>
+                      {prestador.nombre}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} sm={4}>
+              <FormControl fullWidth>
+                <InputLabel>Ruta</InputLabel>
+                <Select
+                  name="ruta_id"
+                  value={newTarifa.ruta_id}
+                  onChange={handleInputChange}
+                  required
+                >
+                  <MenuItem value="">Seleccione una ruta</MenuItem>
+                  {rutas.map((ruta) => (
+                    <MenuItem key={ruta.id} value={ruta.id}>
+                      {ruta.origen} - {ruta.destino}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} sm={4}>
+              <TextField
+                fullWidth
+                type="number"
+                name="tarifa"
+                label="Tarifa"
+                value={newTarifa.tarifa}
+                onChange={handleInputChange}
+                required
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <Button type="submit" variant="contained" color="primary">
+                Añadir Tarifa
+              </Button>
+            </Grid>
+          </Grid>
+        </form>
+      </Paper>
 
-      <div className="pagination">
-        <button 
-          onClick={() => handlePageChange(tarifasData.currentPage - 1)}
-          disabled={tarifasData.currentPage === 1}
-        >
-          Anterior
-        </button>
-        <span>Página {tarifasData.currentPage} de {tarifasData.totalPages}</span>
-        <button 
-          onClick={() => handlePageChange(tarifasData.currentPage + 1)}
-          disabled={tarifasData.currentPage === tarifasData.totalPages}
-        >
-          Siguiente
-        </button>
-      </div>
-    </div>
+      <TableContainer component={Paper}>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>Prestador</TableCell>
+              <TableCell>Ruta</TableCell>
+              <TableCell>Tarifa</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {tarifasData.tarifas.map((tarifa) => (
+              <TableRow key={tarifa.id}>
+                <TableCell>{tarifa.prestador_nombre || tarifa.Prestador?.nombre || 'N/A'}</TableCell>
+                <TableCell>
+                  {(tarifa.origen && tarifa.destino) 
+                    ? `${tarifa.origen} - ${tarifa.destino}` 
+                    : (tarifa.Ruta ? `${tarifa.Ruta.origen} - ${tarifa.Ruta.destino}` : 'N/A')}
+                </TableCell>
+                <TableCell>${tarifa.tarifa}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+
+      <Pagination 
+        count={tarifasData.totalPages}
+        page={tarifasData.currentPage}
+        onChange={(event, value) => handlePageChange(value)}
+        color="primary"
+        sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}
+      />
+    </Container>
   );
 }
 

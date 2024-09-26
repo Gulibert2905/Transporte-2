@@ -1,6 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import './Rutas.css';
+import {
+  Container,
+  Typography,
+  TextField,
+  Button,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  Grid,
+  Snackbar,
+  Alert,
+  Pagination
+} from '@mui/material';
 
 function Rutas() {
   const [rutasData, setRutasData] = useState({
@@ -46,80 +62,94 @@ function Rutas() {
     }
   };
 
-  const handlePageChange = (newPage) => {
+  const handlePageChange = (event, newPage) => {
     fetchRutas(newPage);
   };
 
-  if (loading) return <div>Cargando...</div>;
-  if (error) return <div>{error}</div>;
+  if (loading) return <Typography>Cargando...</Typography>;
 
   return (
-    <div className="rutas-container">
-      <h2>Rutas de Viaje</h2>
+    <Container maxWidth="lg">
+      <Typography variant="h4" gutterBottom>Rutas de Viaje</Typography>
       
-      <form onSubmit={handleSubmit}>
-        <input
-          type="text"
-          name="origen"
-          placeholder="Origen"
-          value={newRuta.origen}
-          onChange={handleInputChange}
-          required
-        />
-        <input
-          type="text"
-          name="destino"
-          placeholder="Destino"
-          value={newRuta.destino}
-          onChange={handleInputChange}
-          required
-        />
-        <input
-          type="number"
-          name="distancia"
-          placeholder="Distancia (km)"
-          value={newRuta.distancia}
-          onChange={handleInputChange}
-          required
-        />
-        <button type="submit">Añadir Ruta</button>
-      </form>
+      <Snackbar open={!!error} autoHideDuration={6000} onClose={() => setError(null)}>
+        <Alert onClose={() => setError(null)} severity="error" sx={{ width: '100%' }}>
+          {error}
+        </Alert>
+      </Snackbar>
 
-      <table>
-        <thead>
-          <tr>
-            <th>Origen</th>
-            <th>Destino</th>
-            <th>Distancia (km)</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rutasData.rutas.map((ruta) => (
-            <tr key={ruta.id}>
-              <td>{ruta.origen}</td>
-              <td>{ruta.destino}</td>
-              <td>{ruta.distancia}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <Paper elevation={3} sx={{ p: 2, mb: 2 }}>
+        <form onSubmit={handleSubmit}>
+          <Grid container spacing={2}>
+            <Grid item xs={12} sm={4}>
+              <TextField
+                fullWidth
+                name="origen"
+                label="Origen"
+                value={newRuta.origen}
+                onChange={handleInputChange}
+                required
+              />
+            </Grid>
+            <Grid item xs={12} sm={4}>
+              <TextField
+                fullWidth
+                name="destino"
+                label="Destino"
+                value={newRuta.destino}
+                onChange={handleInputChange}
+                required
+              />
+            </Grid>
+            <Grid item xs={12} sm={4}>
+              <TextField
+                fullWidth
+                type="number"
+                name="distancia"
+                label="Distancia (km)"
+                value={newRuta.distancia}
+                onChange={handleInputChange}
+                required
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <Button type="submit" variant="contained" color="primary">
+                Añadir Ruta
+              </Button>
+            </Grid>
+          </Grid>
+        </form>
+      </Paper>
 
-      <div className="pagination">
-        <button 
-          onClick={() => handlePageChange(rutasData.currentPage - 1)}
-          disabled={rutasData.currentPage === 1}
-        >
-          Anterior
-        </button>
-        <span>Página {rutasData.currentPage} de {rutasData.totalPages}</span>
-        <button 
-          onClick={() => handlePageChange(rutasData.currentPage + 1)}
-          disabled={rutasData.currentPage === rutasData.totalPages}
-        >
-          Siguiente
-        </button>
-      </div>
-    </div>
+      <TableContainer component={Paper}>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>Origen</TableCell>
+              <TableCell>Destino</TableCell>
+              <TableCell>Distancia (km)</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {rutasData.rutas.map((ruta) => (
+              <TableRow key={ruta.id}>
+                <TableCell>{ruta.origen}</TableCell>
+                <TableCell>{ruta.destino}</TableCell>
+                <TableCell>{ruta.distancia}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+
+      <Pagination 
+        count={rutasData.totalPages}
+        page={rutasData.currentPage}
+        onChange={handlePageChange}
+        color="primary"
+        sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}
+      />
+    </Container>
   );
 }
 

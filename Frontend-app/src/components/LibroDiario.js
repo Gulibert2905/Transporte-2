@@ -1,5 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { 
+  Container, 
+  Typography, 
+  TextField, 
+  Button, 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableContainer, 
+  TableHead, 
+  TableRow, 
+  Paper,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  Grid,
+  Pagination
+} from '@mui/material';
+import AddIcon from '@mui/icons-material/Add';
 
 function LibroDiario() {
   const [transacciones, setTransacciones] = useState([]);
@@ -87,104 +107,145 @@ function LibroDiario() {
   };
 
   return (
-    <div>
-      <h2>Libro Diario</h2>
-      <form onSubmit={handleSubmit}>
-        <input
-          type="date"
-          value={nuevaTransaccion.fecha}
-          onChange={(e) => setNuevaTransaccion({ ...nuevaTransaccion, fecha: e.target.value })}
-          required
-        />
-        <input
-          type="text"
-          value={nuevaTransaccion.descripcion}
-          onChange={(e) => setNuevaTransaccion({ ...nuevaTransaccion, descripcion: e.target.value })}
-          placeholder="Descripción"
-          required
-        />
-        <input
-          type="text"
-          value={nuevaTransaccion.referencia}
-          onChange={(e) => setNuevaTransaccion({ ...nuevaTransaccion, referencia: e.target.value })}
-          placeholder="Referencia"
-        />
-        {nuevaTransaccion.movimientos.map((movimiento, index) => (
-          <div key={index}>
-            <select
-              value={movimiento.cuentaId}
-              onChange={(e) => handleMovimientoChange(index, 'cuentaId', e.target.value)}
-              required
-            >
-              <option value="">Seleccione una cuenta</option>
-              {cuentas.map(cuenta => (
-                <option key={cuenta.id} value={cuenta.id}>{cuenta.codigo} - {cuenta.nombre}</option>
-              ))}
-            </select>
-            <input
-              type="number"
-              value={movimiento.monto}
-              onChange={(e) => handleMovimientoChange(index, 'monto', e.target.value)}
-              placeholder="Monto"
-              required
-            />
-            <select
-              value={movimiento.tipo}
-              onChange={(e) => handleMovimientoChange(index, 'tipo', e.target.value)}
-              required
-            >
-              <option value="DEBITO">Débito</option>
-              <option value="CREDITO">Crédito</option>
-            </select>
-          </div>
-        ))}
-        <button type="button" onClick={agregarMovimiento}>Agregar movimiento</button>
-        <button type="submit">Guardar Transacción</button>
-      </form>
-      <table>
-        <thead>
-          <tr>
-            <th>Fecha</th>
-            <th>Descripción</th>
-            <th>Referencia</th>
-            <th>Movimientos</th>
-          </tr>
-        </thead>
-        <tbody>
-          {transacciones.map(transaccion => (
-            <tr key={transaccion.id}>
-              <td>{new Date(transaccion.fecha).toLocaleDateString()}</td>
-              <td>{transaccion.descripcion}</td>
-              <td>{transaccion.referencia}</td>
-              <td>
-                <ul>
-                  {transaccion.movimientos.map(movimiento => (
-                    <li key={movimiento.id}>
-                      {movimiento.cuenta.nombre}: {movimiento.tipo} {movimiento.monto}
-                    </li>
-                  ))}
-                </ul>
-              </td>
-            </tr>
+    <Container maxWidth="lg">
+      <Typography variant="h4" gutterBottom>
+        Libro Diario
+      </Typography>
+      
+      <Paper elevation={3} style={{ padding: '20px', marginBottom: '20px' }}>
+        <form onSubmit={handleSubmit}>
+          <Grid container spacing={3}>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                type="date"
+                label="Fecha"
+                value={nuevaTransaccion.fecha}
+                onChange={(e) => setNuevaTransaccion({ ...nuevaTransaccion, fecha: e.target.value })}
+                InputLabelProps={{ shrink: true }}
+                required
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Descripción"
+                value={nuevaTransaccion.descripcion}
+                onChange={(e) => setNuevaTransaccion({ ...nuevaTransaccion, descripcion: e.target.value })}
+                required
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Referencia"
+                value={nuevaTransaccion.referencia}
+                onChange={(e) => setNuevaTransaccion({ ...nuevaTransaccion, referencia: e.target.value })}
+              />
+            </Grid>
+          </Grid>
+          
+          {nuevaTransaccion.movimientos.map((movimiento, index) => (
+            <Grid container spacing={3} key={index} style={{ marginTop: '10px' }}>
+              <Grid item xs={12} sm={4}>
+                <FormControl fullWidth>
+                  <InputLabel>Cuenta</InputLabel>
+                  <Select
+                    value={movimiento.cuentaId}
+                    onChange={(e) => handleMovimientoChange(index, 'cuentaId', e.target.value)}
+                    required
+                  >
+                    <MenuItem value="">Seleccione una cuenta</MenuItem>
+                    {cuentas.map(cuenta => (
+                      <MenuItem key={cuenta.id} value={cuenta.id}>{cuenta.codigo} - {cuenta.nombre}</MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} sm={4}>
+                <TextField
+                  fullWidth
+                  type="number"
+                  label="Monto"
+                  value={movimiento.monto}
+                  onChange={(e) => handleMovimientoChange(index, 'monto', e.target.value)}
+                  required
+                />
+              </Grid>
+              <Grid item xs={12} sm={4}>
+                <FormControl fullWidth>
+                  <InputLabel>Tipo</InputLabel>
+                  <Select
+                    value={movimiento.tipo}
+                    onChange={(e) => handleMovimientoChange(index, 'tipo', e.target.value)}
+                    required
+                  >
+                    <MenuItem value="DEBITO">Débito</MenuItem>
+                    <MenuItem value="CREDITO">Crédito</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+            </Grid>
           ))}
-        </tbody>
-      </table>
-      <div>
-        <button 
-          onClick={() => handlePageChange(currentPage - 1)} 
-          disabled={currentPage === 1}
-        >
-          Anterior
-        </button>
-        <span>Página {currentPage} de {totalPages}</span>
-        <button 
-          onClick={() => handlePageChange(currentPage + 1)} 
-          disabled={currentPage === totalPages}
-        >
-          Siguiente
-        </button>
-      </div>
-    </div>
+          
+          <Button 
+            variant="outlined" 
+            startIcon={<AddIcon />} 
+            onClick={agregarMovimiento}
+            style={{ marginTop: '20px' }}
+          >
+            Agregar movimiento
+          </Button>
+          
+          <Button 
+            type="submit" 
+            variant="contained" 
+            color="primary"
+            style={{ marginTop: '20px', marginLeft: '10px' }}
+          >
+            Guardar Transacción
+          </Button>
+        </form>
+      </Paper>
+
+      <TableContainer component={Paper}>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>Fecha</TableCell>
+              <TableCell>Descripción</TableCell>
+              <TableCell>Referencia</TableCell>
+              <TableCell>Movimientos</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {transacciones.map(transaccion => (
+              <TableRow key={transaccion.id}>
+                <TableCell>{new Date(transaccion.fecha).toLocaleDateString()}</TableCell>
+                <TableCell>{transaccion.descripcion}</TableCell>
+                <TableCell>{transaccion.referencia}</TableCell>
+                <TableCell>
+                  <ul>
+                    {transaccion.movimientos.map(movimiento => (
+                      <li key={movimiento.id}>
+                        {movimiento.cuenta.nombre}: {movimiento.tipo} {movimiento.monto}
+                      </li>
+                    ))}
+                  </ul>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+
+      <Pagination 
+        count={totalPages} 
+        page={currentPage} 
+        onChange={(event, value) => handlePageChange(value)}
+        style={{ marginTop: '20px', display: 'flex', justifyContent: 'center' }}
+      />
+    </Container>
   );
 }
 

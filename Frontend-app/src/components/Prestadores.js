@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import axios from 'axios';
 import { useForm } from 'react-hook-form';
-import { Table, Pagination, Form, Button, Alert } from 'react-bootstrap';
-import './Prestadores.css';
+import { 
+  Box, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, 
+  Paper, TextField, Button, Typography, Alert, Pagination, CircularProgress 
+} from '@mui/material';
 
 function Prestadores() {
   const [prestadoresData, setPrestadoresData] = useState({
@@ -74,85 +76,94 @@ function Prestadores() {
     reset();
   };
 
-  const handlePageChange = (newPage) => {
+  const handlePageChange = (event, newPage) => {
     fetchPrestadores(newPage);
   };
 
   const prestadoresMemo = useMemo(() => prestadoresData.prestadores, [prestadoresData.prestadores]);
 
   return (
-    <div className="prestadores-container">
-      <h2>Prestadores de Servicio</h2>
+    <Box p={3}>
+      <Typography variant="h4" gutterBottom>Prestadores de Servicio</Typography>
+
+      {loading && <CircularProgress />}
+      {error && <Alert severity="error">{error}</Alert>}
       
-      {loading && <Alert variant="info">Cargando...</Alert>}
-      {error && <Alert variant="danger">{error}</Alert>}
-      
-      <Form onSubmit={handleSubmit(onSubmit)}>
-        <Form.Group>
-          <Form.Control
-            type="text"
-            placeholder="NIT"
+      <form onSubmit={handleSubmit(onSubmit)}>
+        <Box mb={2}>
+          <TextField
+            fullWidth
+            label="NIT"
             {...register("nit", { required: "NIT es requerido" })}
             disabled={editingPrestador}
+            error={!!errors.nit}
+            helperText={errors.nit?.message}
           />
-          {errors.nit && <Form.Text className="text-danger">{errors.nit.message}</Form.Text>}
-        </Form.Group>
-        <Form.Group>
-          <Form.Control
-            type="text"
-            placeholder="Nombre"
+        </Box>
+        <Box mb={2}>
+          <TextField
+            fullWidth
+            label="Nombre"
             {...register("nombre", { required: "Nombre es requerido" })}
+            error={!!errors.nombre}
+            helperText={errors.nombre?.message}
           />
-          {errors.nombre && <Form.Text className="text-danger">{errors.nombre.message}</Form.Text>}
-        </Form.Group>
-        <Form.Group>
-          <Form.Control
-            type="text"
-            placeholder="Contacto"
+        </Box>
+        <Box mb={2}>
+          <TextField
+            fullWidth
+            label="Contacto"
             {...register("contacto", { required: "Contacto es requerido" })}
+            error={!!errors.contacto}
+            helperText={errors.contacto?.message}
           />
-          {errors.contacto && <Form.Text className="text-danger">{errors.contacto.message}</Form.Text>}
-        </Form.Group>
-        <Button type="submit">{editingPrestador ? 'Actualizar' : 'Añadir'} Prestador</Button>
-        {editingPrestador && <Button variant="secondary" onClick={handleCancel}>Cancelar</Button>}
-      </Form>
+        </Box>
+        <Button type="submit" variant="contained" color="primary">
+          {editingPrestador ? 'Actualizar' : 'Añadir'} Prestador
+        </Button>
+        {editingPrestador && (
+          <Button variant="outlined" onClick={handleCancel} sx={{ ml: 2 }}>
+            Cancelar
+          </Button>
+        )}
+      </form>
 
-      <Table striped bordered hover>
-        <thead>
-          <tr>
-            <th>NIT</th>
-            <th>Nombre</th>
-            <th>Contacto</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          {prestadoresMemo.map((prestador) => (
-            <tr key={prestador.nit}>
-              <td>{prestador.nit}</td>
-              <td>{prestador.nombre}</td>
-              <td>{prestador.contacto}</td>
-              <td>
-                <Button variant="info" onClick={() => handleEdit(prestador)}>Editar</Button>
-                <Button variant="danger" onClick={() => handleDelete(prestador.nit)}>Eliminar</Button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </Table>
+      <TableContainer component={Paper} sx={{ mt: 3 }}>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>NIT</TableCell>
+              <TableCell>Nombre</TableCell>
+              <TableCell>Contacto</TableCell>
+              <TableCell>Acciones</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {prestadoresMemo.map((prestador) => (
+              <TableRow key={prestador.nit}>
+                <TableCell>{prestador.nit}</TableCell>
+                <TableCell>{prestador.nombre}</TableCell>
+                <TableCell>{prestador.contacto}</TableCell>
+                <TableCell>
+                  <Button variant="outlined" onClick={() => handleEdit(prestador)}>Editar</Button>
+                  <Button variant="contained" color="error" onClick={() => handleDelete(prestador.nit)} sx={{ ml: 2 }}>
+                    Eliminar
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
 
-      <Pagination>
-        <Pagination.Prev
-          onClick={() => handlePageChange(prestadoresData.currentPage - 1)}
-          disabled={prestadoresData.currentPage === 1}
+      <Box mt={3} display="flex" justifyContent="center">
+        <Pagination 
+          count={prestadoresData.totalPages} 
+          page={prestadoresData.currentPage} 
+          onChange={handlePageChange}
         />
-        <Pagination.Item>{prestadoresData.currentPage}</Pagination.Item>
-        <Pagination.Next
-          onClick={() => handlePageChange(prestadoresData.currentPage + 1)}
-          disabled={prestadoresData.currentPage === prestadoresData.totalPages}
-        />
-      </Pagination>
-    </div>
+      </Box>
+    </Box>
   );
 }
 

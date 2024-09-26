@@ -1,10 +1,10 @@
 import React from 'react';
-import { BrowserRouter as Router, Route, Routes, Link, Navigate } from 'react-router-dom';
+import { Routes, Route, Link, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import PrivateRoute from './components/PrivateRoute';
 import ProtectedRoute from './components/ProtectedRoute';
 import Login from './components/Login';
-import Prestadores from './pages/Prestadores';
+import Prestadores from './components/Prestadores';
 import Rutas from './pages/Rutas';
 import Tarifas from './pages/Tarifas';
 import Viajes from './components/Viajes';
@@ -13,40 +13,43 @@ import Dashboard from './components/Dashboard';
 import Unauthorized from './components/Unauthorized';
 import SelectUser from './components/SelectUser';
 import ModuloContabilidad from './components/ModuloContabilidad';
+import { AppBar, Toolbar, Typography, Button, Container, Box } from '@mui/material';
 
 function Navigation() {
   const { user, logout } = useAuth();
   const isDevelopment = process.env.REACT_APP_ENV === 'development';
   console.log("Navigation - Usuario actual:", user);
+
   return (
-    <nav>
-      <ul>
-        <li><Link to="/">Inicio</Link></li>
-        {user && (
+    <AppBar position="static">
+      <Toolbar>
+        <Typography variant="h6" component={Link} to="/" style={{ flexGrow: 1, textDecoration: 'none', color: 'inherit' }}>
+          Inicio
+        </Typography>
+        {user ? (
           <>
-            <li><Link to="/dashboard">Dashboard</Link></li>
+            <Button color="inherit" component={Link} to="/dashboard">Dashboard</Button>
             {(user.rol === 'admin' || user.rol === 'contador') && (
               <>
-                <li><Link to="/prestadores">Prestadores</Link></li>
-                <li><Link to="/rutas">Rutas</Link></li>
-                <li><Link to="/tarifas">Tarifas</Link></li>
+                <Button color="inherit" component={Link} to="/prestadores">Prestadores</Button>
+                <Button color="inherit" component={Link} to="/rutas">Rutas</Button>
+                <Button color="inherit" component={Link} to="/tarifas">Tarifas</Button>
               </>
             )}
-            <li><Link to="/viajes">Viajes</Link></li>
-            {user && user.rol === 'contador' && (
-            <li><Link to="/contabilidad">Contabilidad</Link></li>
+            <Button color="inherit" component={Link} to="/viajes">Viajes</Button>
+            {user.rol === 'contador' && (
+              <Button color="inherit" component={Link} to="/contabilidad">Contabilidad</Button>
             )}
             {isDevelopment && !user && (
-              <li><Link to="/select-user">Seleccionar Usuario (Dev)</Link></li>
+              <Button color="inherit" component={Link} to="/select-user">Seleccionar Usuario (Dev)</Button>
             )}
-            <li><button onClick={logout}>Cerrar Sesión</button></li>
+            <Button color="inherit" onClick={logout}>Cerrar Sesión</Button>
           </>
+        ) : (
+          <Button color="inherit" component={Link} to="/login">Iniciar Sesión</Button>
         )}
-        {!user && (
-          <li><Link to="/login">Iniciar Sesión</Link></li>
-        )}
-      </ul>
-    </nav>
+      </Toolbar>
+    </AppBar>
   );
 }
 
@@ -55,10 +58,9 @@ function AppRoutes() {
 
   return (
     <AuthProvider>
-      <Router>
-        <div>
-          <Navigation />
-
+      <Box sx={{ flexGrow: 1 }}>
+        <Navigation />
+        <Container>
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
@@ -73,10 +75,8 @@ function AppRoutes() {
               }
             />
 
-            {/* Unauthorized route */}
             <Route path="/unauthorized" element={<Unauthorized />} />
 
-            {/* Private routes */}
             <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
             <Route path="/prestadores" element={
               <PrivateRoute allowedRoles={['admin', 'contador']}>
@@ -95,16 +95,14 @@ function AppRoutes() {
             } />
             <Route path="/viajes" element={<PrivateRoute><Viajes /></PrivateRoute>} />
 
-            {/* Development routes */}
             {isDevelopment && (
               <Route path="/select-user" element={<SelectUser />} />
             )}
 
-            {/* Catch-all route */}
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>
-        </div>
-      </Router>
+        </Container>
+      </Box>
     </AuthProvider>
   );
 }

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Tabs, Tab } from 'react-bootstrap';
+import { Tabs, Tab, Box, Typography } from '@mui/material';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import PlanCuentas from './PlanCuentas';
@@ -11,48 +11,82 @@ import NuevaFacturaForm from './NuevaFacturaForm';
 import BalanceGeneral from './BalanceGeneral';
 import EstadoResultados from './EstadoResultados';
 
+function TabPanel(props) {
+  const { children, value, index, ...other } = props;
+
+  return (
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`simple-tabpanel-${index}`}
+      aria-labelledby={`simple-tab-${index}`}
+      {...other}
+    >
+      {value === index && (
+        <Box sx={{ p: 3 }}>
+          {children}
+        </Box>
+      )}
+    </div>
+  );
+}
+
 function ModuloContabilidad() {
-  
-    console.log("Renderizando ModuloContabilidad");
-    const { user } = useAuth();
-    console.log("ModuloContabilidad - Usuario actual:", user);
+  const [value, setValue] = React.useState(0);
+  const { user } = useAuth();
 
-    if (user.rol !== 'contador') {
-      console.log("Usuario no autorizado, redirigiendo...");
-      return <Navigate to="/unauthorized" />;
-    }
+  console.log("Renderizando ModuloContabilidad");
+  console.log("ModuloContabilidad - Usuario actual:", user);
 
-    console.log("Renderizando contenido de ModuloContabilidad");
-    return (
-      <div>
-        <h1>Módulo de Contabilidad</h1>
-          <Tabs defaultActiveKey="balance">
-          <Tab eventKey="balanceGeneral" title="Balance General">
-            <BalanceGeneral />
-          </Tab>
-          <Tab eventKey="estadoResultados" title="Estado de Resultados">
-            <EstadoResultados />
-          </Tab>
-          <Tab eventKey="planCuentas" title="Plan de Cuentas">
-            <NuevaCuentaForm />
-            <PlanCuentas />
-          </Tab>
-          <Tab eventKey="libroDiario" title="Libro Diario">
-            <NuevaTransaccionForm />
-            <LibroDiario />
-          </Tab>
-          <Tab eventKey="facturacion" title="Facturación">
-            <NuevaFacturaForm />
-            <Facturacion />
-          </Tab>
-          <Tab eventKey="informes" title="Informes Financieros">
-            <BalanceGeneral />
-            <EstadoResultados />
-          </Tab>
+  if (user.rol !== 'contador') {
+    console.log("Usuario no autorizado, redirigiendo...");
+    return <Navigate to="/unauthorized" />;
+  }
+
+  const handleChange = (event, newValue) => {
+    setValue(newValue);
+  };
+
+  console.log("Renderizando contenido de ModuloContabilidad");
+  return (
+    <Box sx={{ width: '100%' }}>
+      <Typography variant="h4" component="h1" gutterBottom>
+        Módulo de Contabilidad
+      </Typography>
+      <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+        <Tabs value={value} onChange={handleChange} aria-label="contabilidad tabs">
+          <Tab label="Balance General" />
+          <Tab label="Estado de Resultados" />
+          <Tab label="Plan de Cuentas" />
+          <Tab label="Libro Diario" />
+          <Tab label="Facturación" />
+          <Tab label="Informes Financieros" />
         </Tabs>
-      </div>
-      
-    );
-  } 
+      </Box>
+      <TabPanel value={value} index={0}>
+        <BalanceGeneral />
+      </TabPanel>
+      <TabPanel value={value} index={1}>
+        <EstadoResultados />
+      </TabPanel>
+      <TabPanel value={value} index={2}>
+        <NuevaCuentaForm />
+        <PlanCuentas />
+      </TabPanel>
+      <TabPanel value={value} index={3}>
+        <NuevaTransaccionForm />
+        <LibroDiario />
+      </TabPanel>
+      <TabPanel value={value} index={4}>
+        <NuevaFacturaForm />
+        <Facturacion />
+      </TabPanel>
+      <TabPanel value={value} index={5}>
+        <BalanceGeneral />
+        <EstadoResultados />
+      </TabPanel>
+    </Box>
+  );
+}
 
 export default ModuloContabilidad;

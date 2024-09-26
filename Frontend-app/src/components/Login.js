@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import './Login.css';
+import { Container, TextField, Button, Typography, Box, Alert } from '@mui/material';
 
 function Login() {
   const [credentials, setCredentials] = useState({ username: '', password: '' });
@@ -11,7 +11,7 @@ function Login() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setCredentials(prev => ({ ...prev, [name]: value }));
+    setCredentials((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
@@ -27,29 +27,56 @@ function Login() {
   };
 
   return (
-    <div className="login-container">
-      <form className="login-form" onSubmit={handleSubmit}>
-        <h2>Iniciar Sesión</h2>
-        {error && <div className="error-message">{error}</div>}
-        <input
-          type="text"
-          name="username"
-          value={credentials.username}
-          onChange={handleChange}
-          placeholder="Usuario"
-          required
-        />
-        <input
-          type="password"
-          name="password"
-          value={credentials.password}
-          onChange={handleChange}
-          placeholder="Contraseña"
-          required
-        />
-        <button type="submit">Iniciar Sesión</button>
-      </form>
-    </div>
+    <Container component="main" maxWidth="xs">
+      <Box
+        sx={{
+          marginTop: 8,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+        }}
+      >
+        <Typography component="h1" variant="h5">
+          Iniciar Sesión
+        </Typography>
+        <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1 }}>
+          {error && <Alert severity="error">{error}</Alert>}
+          <TextField
+            margin="normal"
+            required
+            fullWidth
+            id="username"
+            label="Usuario"
+            name="username"
+            autoComplete="username"
+            autoFocus
+            value={credentials.username}
+            onChange={handleChange}
+          />
+          <TextField
+            margin="normal"
+            required
+            fullWidth
+            name="password"
+            label="Contraseña"
+            type="password"
+            id="password"
+            autoComplete="current-password"
+            value={credentials.password}
+            onChange={handleChange}
+          />
+          <Button
+            type="submit"
+            fullWidth
+            variant="contained"
+            color="primary"
+            sx={{ mt: 3, mb: 2 }}
+          >
+            Iniciar Sesión
+          </Button>
+        </Box>
+      </Box>
+    </Container>
   );
 }
 
