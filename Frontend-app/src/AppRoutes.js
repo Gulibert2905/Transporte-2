@@ -28,18 +28,23 @@ function Navigation() {
         </Typography>
         {user ? (
           <>
-            <Button color="inherit" component={Link} to="/dashboard">Dashboard</Button>
+            
             {(user.rol === 'admin' || user.rol === 'contador') && (
               <>
                 <Button color="inherit" component={Link} to="/prestadores">Prestadores</Button>
                 <Button color="inherit" component={Link} to="/rutas">Rutas</Button>
                 <Button color="inherit" component={Link} to="/tarifas">Tarifas</Button>
+                
               </>
             )}
             <Button color="inherit" component={Link} to="/viajes">Viajes</Button>
+            <Button color="inherit" component={Link} to="/dashboard">Dashboard</Button>
             {user.rol === 'contador' && (
               <Button color="inherit" component={Link} to="/contabilidad">Contabilidad</Button>
+              
+              
             )}
+            
             {isDevelopment && !user && (
               <Button color="inherit" component={Link} to="/select-user">Seleccionar Usuario (Dev)</Button>
             )}
@@ -94,7 +99,7 @@ function AppRoutes() {
               </PrivateRoute>
             } />
             <Route path="/viajes" element={<PrivateRoute><Viajes /></PrivateRoute>} />
-
+            
             {isDevelopment && (
               <Route path="/select-user" element={<SelectUser />} />
             )}
