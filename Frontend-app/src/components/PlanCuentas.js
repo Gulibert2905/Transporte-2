@@ -33,7 +33,7 @@ function PlanCuentas() {
 
   const cargarCuentas = async () => {
     try {
-      const response = await axios.get('/api/cuentas');
+      const response = await axios.get('/api/cuenta');
       setCuentas(response.data);
     } catch (error) {
       console.error('Error al cargar cuentas:', error);
@@ -48,7 +48,7 @@ function PlanCuentas() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post('/api/cuentas', nuevaCuenta);
+      await axios.post('/api/cuenta', nuevaCuenta);
       cargarCuentas();
       setNuevaCuenta({ codigo: '', nombre: '', tipo: 'ACTIVO' });
       setSuccess('Cuenta creada exitosamente');

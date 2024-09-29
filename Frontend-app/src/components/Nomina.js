@@ -31,15 +31,20 @@ function Nomina() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await axios.post('/api/nominas', nuevaNomina);
-    fetchNominas();
-    setNuevaNomina({
-      empleado_id: '',
-      periodo: '',
-      salario_base: '',
-      deducciones: '',
-      bonificaciones: ''
-    });
+    console.log(nuevaNomina);  // Para verificar el contenido
+    try {
+      await axios.post('/api/nominas', nuevaNomina);
+      fetchNominas();
+      setNuevaNomina({
+        empleado_id: '',
+        periodo: '',
+        salario_base: '',
+        deducciones: '',
+        bonificaciones: ''
+      });
+    } catch (err) {
+      console.error('Error al crear la nómina:', err);
+    }
   };
 
   return (

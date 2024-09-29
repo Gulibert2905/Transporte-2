@@ -22,19 +22,31 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: true
     }
   }, {
-    tableName: 'Cuenta'
+    tableName: 'Cuenta',
+    indexes: [
+      {
+        unique: true,
+        fields: ['codigo']
+      },
+      {
+        fields: ['cuentaPadreId']
+      }
+    ]
   });
 
   Cuenta.associate = (models) => {
-    Cuenta.hasMany(models.Cuenta, { 
-      as: 'subcuentas', 
+    Cuenta.hasMany(models.Cuenta, {
+      as: 'subcuentas',
       foreignKey: 'cuentaPadreId'
     });
-    Cuenta.belongsTo(models.Cuenta, { 
-      as: 'cuentaPadre', 
+    Cuenta.belongsTo(models.Cuenta, {
+      as: 'cuentaPadre',
       foreignKey: 'cuentaPadreId'
     });
-    Cuenta.hasMany(models.MovimientoCuenta, { foreignKey: 'cuentaId' });
+    Cuenta.hasMany(models.MovimientoCuenta, { 
+      foreignKey: 'cuentaId',
+      as: 'movimientos'
+    });
   };
 
   return Cuenta;

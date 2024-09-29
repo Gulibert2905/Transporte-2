@@ -1,99 +1,56 @@
-// controllers/contabilidadController.js
-const { Cuenta, Transaccion, Factura } = require('../models');
+const db = require('../models');
+const cuentaController = require('./cuentaController');
 const { generateBalancePDF, generateBalanceExcel, generateEstadoResultadosPDF, generateEstadoResultadosExcel } = require('../services/reportGenerator');
-
-exports.crearCuenta = async (req, res) => {
-  try {
-    const cuenta = await Cuenta.create(req.body);
-    res.status(201).json(cuenta);
-  } catch (error) {
-    res.status(400).json({ error: error.message });
-  }
-};
-
-exports.obtenerCuentas = async (req, res) => {
-  try {
-    const cuentas = await Cuenta.findAll();
-    res.json(cuentas);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
-
-exports.crearTransaccion = async (req, res) => {
-  const t = await sequelize.transaction();
-
-  try {
-    const { cuentaId, monto, tipo } = req.body;
-    const transaccion = await Transaccion.create(req.body, { transaction: t });
-
-    const cuenta = await Cuenta.findByPk(cuentaId, { transaction: t });
-    if (!cuenta) {
-      throw new Error('Cuenta no encontrada');
-    }
-
-    const nuevoSaldo = tipo === 'DEBITO' 
-      ? parseFloat(cuenta.saldo) + parseFloat(monto)
-      : parseFloat(cuenta.saldo) - parseFloat(monto);
-
-    await cuenta.update({ saldo: nuevoSaldo }, { transaction: t });
-
-    await t.commit();
-    res.status(201).json(transaccion);
-  } catch (error) {
-    await t.rollback();
-    res.status(400).json({ error: error.message });
-  }
-};
-
-exports.obtenerTransacciones = async (req, res) => {
-  try {
-    const transacciones = await Transaccion.findAll();
-    res.json(transacciones);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
-
-exports.crearFactura = async (req, res) => {
-  try {
-    const factura = await Factura.create(req.body);
-    res.status(201).json(factura);
-  } catch (error) {
-    res.status(400).json({ error: error.message });
-  }
-};
-
-exports.obtenerFacturas = async (req, res) => {
-  try {
-    const facturas = await Factura.findAll();
-    res.json(facturas);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
 
 exports.getBalanceGeneral = async (req, res) => {
   try {
-    const activos = await Cuenta.sum('saldo', { where: { tipo: 'ACTIVO' } });
-    const pasivos = await Cuenta.sum('saldo', { where: { tipo: 'PASIVO' } });
+    console.log('Iniciando cálculo de balance general');
+    console.log('Modelos disponibles:', Object.keys(db));
+    const activos = await db.Cuenta.sum('saldo', { 
+      where: { tipo: 'ACTIVO' } 
+    });
+    console.log('Activos calculados:', activos);
+    
+    const pasivos = await db.Cuenta.sum('saldo', { 
+      where: { tipo: 'PASIVO' } 
+    });
+    console.log('Pasivos calculados:', pasivos);
+    
     const patrimonio = activos - pasivos;
+    console.log('Patrimonio calculado:', patrimonio);
 
     res.json({ activos, pasivos, patrimonio });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('Error detallado:', error);
+    
+    res.status(500).json({ 
+      message: 'Error al obtener balance general', 
+      error: error.message 
+    });
   }
 };
 
 exports.getEstadoResultados = async (req, res) => {
   try {
-    const ingresos = await Cuenta.sum('saldo', { where: { tipo: 'INGRESO' } });
-    const gastos = await Cuenta.sum('saldo', { where: { tipo: 'GASTO' } });
+    console.log('Iniciando cálculo de estado de resultados');
+    
+    // Usamos el controlador de Cuenta para obtener los datos
+    const ingresos = await cuentaController.getSumByTipo('INGRESO');
+    console.log('Ingresos calculados:', ingresos);
+    
+    const gastos = await cuentaController.getSumByTipo('GASTO');
+    console.log('Gastos calculados:', gastos);
+    
     const utilidad = ingresos - gastos;
+    console.log('Utilidad calculada:', utilidad);
 
     res.json({ ingresos, gastos, utilidad });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('Error al obtener estado de resultados:', error);
+    res.status(500).json({ 
+      message: 'Error al obtener estado de resultados', 
+      error: error.message 
+    });
   }
 };
 
