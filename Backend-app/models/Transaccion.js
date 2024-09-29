@@ -12,12 +12,14 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING
     }
   }, {
-    tableName: 'Transaccions' // Nota que usamos el nombre exacto de la tabla
+    tableName: 'Transaccions'
   });
 
   Transaccion.associate = (models) => {
-    Transaccion.hasMany(models.MovimientoCuenta, { as: 'movimientos' });
-    Transaccion.hasMany(models.MovimientoCuenta, { foreignKey: 'TransaccionId' });
+    Transaccion.hasMany(models.MovimientoCuenta, { 
+      as: 'movimientos',
+      foreignKey: 'TransaccionId'
+    });
   };
 
   return Transaccion;

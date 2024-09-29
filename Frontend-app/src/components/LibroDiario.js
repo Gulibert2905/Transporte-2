@@ -50,7 +50,7 @@ function LibroDiario() {
 
   const cargarCuentas = async () => {
     try {
-      const response = await axios.get('/api/cuentas');
+      const response = await axios.get('/api/cuenta');
       setCuentas(response.data);
     } catch (error) {
       console.error('Error al cargar cuentas:', error);

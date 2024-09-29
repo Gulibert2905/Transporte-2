@@ -21,4 +21,14 @@ exports.obtenerCuentas = async (req, res) => {
   }
 };
 
+exports.getSumByTipo = async (tipo) => {
+  try {
+    const sum = await Cuenta.sum('saldo', { where: { tipo } });
+    return sum || 0;  // Retornamos 0 si no hay resultados
+  } catch (error) {
+    console.error(`Error al calcular la suma para el tipo ${tipo}:`, error);
+    throw error;
+  }
+};
+
 // Implementa aquí las funciones para actualizar y eliminar cuentas

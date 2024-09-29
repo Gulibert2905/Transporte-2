@@ -20,7 +20,7 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.ENUM('DEBITO', 'CREDITO'),
       allowNull: false
     },
-    TransaccionId: {  // Nota la 'T' mayúscula aquí
+    TransaccionId: {
       type: DataTypes.INTEGER,
       allowNull: true
     }
@@ -29,8 +29,14 @@ module.exports = (sequelize, DataTypes) => {
   });
 
   MovimientoCuenta.associate = (models) => {
-    MovimientoCuenta.belongsTo(models.Cuenta, { foreignKey: 'cuentaId' });
-    MovimientoCuenta.belongsTo(models.Transaccion, { foreignKey: 'TransaccionId' });  // Nota la 'T' mayúscula aquí
+    MovimientoCuenta.belongsTo(models.Cuenta, { 
+      foreignKey: 'cuentaId',
+      as: 'cuenta'
+    });
+    MovimientoCuenta.belongsTo(models.Transaccion, { 
+      foreignKey: 'TransaccionId',
+      as: 'transaccion'
+    });
   };
 
   return MovimientoCuenta;

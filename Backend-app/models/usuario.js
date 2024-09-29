@@ -16,6 +16,14 @@ module.exports = (sequelize, DataTypes) => {
     }, {
       tableName: 'usuarios', // Esto es crucial
       timestamps: true // Asegúrate de que esto coincida con tu estructura de tabla
+    },{
+      
+      indexes: [
+        {
+          unique: true,
+          fields: ['username']
+        }
+      ]
     });
   
     return Usuario;

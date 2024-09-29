@@ -65,7 +65,7 @@ function FacturaVenta() {
 
   const fetchFacturas = async () => {
     try {
-      const response = await axios.get('/api/facturas-venta');
+      const response = await axios.get('/api/factura-venta');
       setFacturas(response.data);
     } catch (error) {
       console.error('Error al obtener las facturas:', error);
@@ -118,7 +118,7 @@ function FacturaVenta() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post('/api/facturas-venta', nuevaFactura);
+      await axios.post('/api/factura-venta', nuevaFactura);
       fetchFacturas();
       setNuevaFactura({
         numero: '',

@@ -44,13 +44,17 @@ const comprobanteEgresoRoutes = require('./routes/comprobanteEgresoRoutes');
 const reciboCajaRoutes = require('./routes/reciboCajaRoutes');
 const facturaCompraRoutes = require('./routes/facturaCompraRoutes');
 const notaDebitoCreditoRoutes = require('./routes/notaDebitoCreditoRoutes');
+const facturaRoutes = require("./routes/facturaRoutes")
 const notaContabilidadRoutes = require('./routes/notaContabilidadRoutes');
+const cuentaRoutes = require("./routes/cuentaRoutes")
+const transaccionesRoutes = require('./routes/transaccionesRoutes');
 // Log de modelos cargados
 console.log('Modelos cargados:', Object.keys(db));
 
 // Usar rutas
 app.use('/api/prestadores', prestadoresRoutes);
 app.use('/api/rutas', rutasRoutes);
+app.use('/api/transacciones', transaccionesRoutes);
 app.use('/api/tarifas', tarifasRoutes);
 app.use('/api/viajes', viajesRoutes);
 app.use('/api/reportes', reporteRoutes);
@@ -62,6 +66,8 @@ app.use('/api/recibos-caja', reciboCajaRoutes);
 app.use('/api/facturas-compra', facturaCompraRoutes);
 app.use('/api/notas-debito-credito', notaDebitoCreditoRoutes);
 app.use('/api/notas-contabilidad', notaContabilidadRoutes);
+app.use("/api/cuenta", cuentaRoutes);
+app.use("/api/factura-venta", facturaRoutes);
 app.use('/api', authRoutes);
 
 
@@ -71,17 +77,13 @@ const PORT = process.env.PORT || 3000;
 db.sequelize.sync({ alter: false })
   .then(() => {
     console.log('Conexión a la base de datos establecida correctamente.');
-    return db.sequelize.sync({ alter: true });
-  })
-  .then(() => {
-    console.log('Modelos sincronizados con la base de datos.');
     app.listen(PORT, () => {
       console.log(`Servidor corriendo en el puerto ${PORT}`);
     });
   })
   .catch(err => {
     console.error('Error al conectar con la base de datos:', err);
-    process.exit(1); // Termina el proceso si hay un error de conexión
+    process.exit(1);
   });
 
 // Manejo de errores global
