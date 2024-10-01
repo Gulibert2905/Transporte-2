@@ -1,15 +1,24 @@
-module.exports = (sequelize, DataTypes) => {
+  module.exports = (sequelize, DataTypes) => {
     const DetalleNotaContabilidad = sequelize.define('DetalleNotaContabilidad', {
-      cuenta_id: DataTypes.INTEGER,
+      cuenta_id: {
+        type: DataTypes.INTEGER,
+        allowNull: false
+      },
       descripcion: DataTypes.TEXT,
-      debito: DataTypes.DECIMAL(10, 2),
-      credito: DataTypes.DECIMAL(10, 2)
+      debito: {
+        type: DataTypes.DECIMAL(10, 2),
+        defaultValue: 0
+      },
+      credito: {
+        type: DataTypes.DECIMAL(10, 2),
+        defaultValue: 0
+      }
     });
-  
+
     DetalleNotaContabilidad.associate = (models) => {
       DetalleNotaContabilidad.belongsTo(models.NotaContabilidad);
-      DetalleNotaContabilidad.belongsTo(models.Cuenta);
+      DetalleNotaContabilidad.belongsTo(models.Cuenta, { foreignKey: 'cuenta_id' });
     };
-  
+
     return DetalleNotaContabilidad;
   };

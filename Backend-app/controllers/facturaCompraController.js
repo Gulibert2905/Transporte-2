@@ -4,6 +4,11 @@ exports.crearFacturaCompra = async (req, res) => {
   try {
     const { numero, fecha, proveedor, total, estado } = req.body;
     
+    // Verifica que todos los campos requeridos estén presentes
+    if (!numero || !fecha || !proveedor || !total || !estado) {
+      return res.status(400).json({ message: 'Faltan datos requeridos' });
+    }
+    
     const facturaCompra = await FacturaCompra.create({
       numero,
       fecha,
