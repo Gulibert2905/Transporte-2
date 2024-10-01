@@ -1,10 +1,10 @@
-// src/components/ReciboCaja.js
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { 
   Container, Typography, TextField, Button, Table, TableBody, 
-  TableCell, TableContainer, TableHead, TableRow, Paper, Grid 
+  TableCell, TableContainer, TableHead, TableRow, Paper, Grid, Snackbar
 } from '@mui/material';
+import MuiAlert from '@mui/material/Alert';
 
 function ReciboCaja() {
   const [recibos, setRecibos] = useState([]);
@@ -15,14 +15,21 @@ function ReciboCaja() {
     concepto: '',
     monto: ''
   });
+  const [error, setError] = useState(null);
+  const [openSnackbar, setOpenSnackbar] = useState(false);
 
   useEffect(() => {
     fetchRecibos();
   }, []);
 
   const fetchRecibos = async () => {
-    const res = await axios.get('/api/recibos-caja');
-    setRecibos(res.data);
+    try {
+      const res = await axios.get('/api/recibos-caja');
+      setRecibos(res.data);
+    } catch (error) {
+      console.error('Error al obtener recibos:', error);
+      setError('Error al cargar los recibos');
+    }
   };
 
   const handleInputChange = (e) => {
@@ -31,15 +38,28 @@ function ReciboCaja() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await axios.post('/api/recibos-caja', nuevoRecibo);
-    fetchRecibos();
-    setNuevoRecibo({
-      numero: '',
-      fecha: '',
-      cliente: '',
-      concepto: '',
-      monto: ''
-    });
+    try {
+      await axios.post('/api/recibos-caja', nuevoRecibo);
+      fetchRecibos();
+      setNuevoRecibo({
+        numero: '',
+        fecha: '',
+        cliente: '',
+        concepto: '',
+        monto: ''
+      });
+      setOpenSnackbar(true);
+    } catch (error) {
+      console.error('Error al crear recibo:', error.response?.data || error.message);
+      setError(error.response?.data?.message || 'Error al crear el recibo');
+    }
+  };
+
+  const handleCloseSnackbar = (event, reason) => {
+    if (reason === 'clickaway') {
+      return;
+    }
+    setOpenSnackbar(false);
   };
 
   return (
@@ -54,6 +74,7 @@ function ReciboCaja() {
               name="numero"
               value={nuevoRecibo.numero}
               onChange={handleInputChange}
+              required
             />
           </Grid>
           <Grid item xs={12} sm={6}>
@@ -67,6 +88,38 @@ function ReciboCaja() {
               InputLabelProps={{
                 shrink: true,
               }}
+              required
+            />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              fullWidth
+              label="Cliente"
+              name="cliente"
+              value={nuevoRecibo.cliente}
+              onChange={handleInputChange}
+              required
+            />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              fullWidth
+              label="Concepto"
+              name="concepto"
+              value={nuevoRecibo.concepto}
+              onChange={handleInputChange}
+              required
+            />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              fullWidth
+              label="Monto"
+              name="monto"
+              type="number"
+              value={nuevoRecibo.monto}
+              onChange={handleInputChange}
+              required
             />
           </Grid>
           {/* Añade más campos según sea necesario */}
@@ -101,6 +154,12 @@ function ReciboCaja() {
           </TableBody>
         </Table>
       </TableContainer>
+      <Snackbar open={openSnackbar} autoHideDuration={6000} onClose={handleCloseSnackbar}>
+        <MuiAlert elevation={6} variant="filled" onClose={handleCloseSnackbar} severity="success">
+          Recibo creado exitosamente
+        </MuiAlert>
+      </Snackbar>
+      {error && <Typography color="error">{error}</Typography>}
     </Container>
   );
 }

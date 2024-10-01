@@ -31,6 +31,7 @@ function FacturaCompra() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log(nuevaFactura)
     await axios.post('/api/facturas-compra', nuevaFactura);
     fetchFacturas();
     setNuevaFactura({

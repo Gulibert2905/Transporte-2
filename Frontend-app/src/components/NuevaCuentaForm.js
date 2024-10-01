@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import { TextField, MenuItem, Button, Grid, Paper, Typography } from '@mui/material';
 
 function NuevaCuentaForm({ onCuentaCreada }) {
   const [cuenta, setCuenta] = useState({ codigo: '', nombre: '', tipo: 'ACTIVO' });
@@ -7,7 +8,7 @@ function NuevaCuentaForm({ onCuentaCreada }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post('/api/contabilidad/cuentas', cuenta);
+      const res = await axios.post('/api/cuenta', cuenta);
       onCuentaCreada(res.data);
       setCuenta({ codigo: '', nombre: '', tipo: 'ACTIVO' });
     } catch (error) {
@@ -16,34 +17,54 @@ function NuevaCuentaForm({ onCuentaCreada }) {
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <input
-        type="text"
-        placeholder="Código"
-        value={cuenta.codigo}
-        onChange={(e) => setCuenta({...cuenta, codigo: e.target.value})}
-        required
-      />
-      <input
-        type="text"
-        placeholder="Nombre"
-        value={cuenta.nombre}
-        onChange={(e) => setCuenta({...cuenta, nombre: e.target.value})}
-        required
-      />
-      <select
-        value={cuenta.tipo}
-        onChange={(e) => setCuenta({...cuenta, tipo: e.target.value})}
-      >
-        <option value="ACTIVO">Activo</option>
-        <option value="PASIVO">Pasivo</option>
-        <option value="PATRIMONIO">Patrimonio</option>
-        <option value="INGRESO">Ingreso</option>
-        <option value="GASTO">Gasto</option>
-      </select>
-      <button type="submit">Crear Cuenta</button>
-    </form>
+    <Paper elevation={3} style={{ padding: 16, maxWidth: 600, margin: 'auto' }}>
+      <Typography variant="h6" gutterBottom>
+        Crear Nueva Cuenta
+      </Typography>
+      <form onSubmit={handleSubmit}>
+        <Grid container spacing={2}>
+          <Grid item xs={12}>
+            <TextField
+              fullWidth
+              label="Código"
+              value={cuenta.codigo}
+              onChange={(e) => setCuenta({ ...cuenta, codigo: e.target.value })}
+              required
+            />
+          </Grid>
+          <Grid item xs={12}>
+            <TextField
+              fullWidth
+              label="Nombre"
+              value={cuenta.nombre}
+              onChange={(e) => setCuenta({ ...cuenta, nombre: e.target.value })}
+              required
+            />
+          </Grid>
+          <Grid item xs={12}>
+            <TextField
+              select
+              fullWidth
+              label="Tipo de Cuenta"
+              value={cuenta.tipo}
+              onChange={(e) => setCuenta({ ...cuenta, tipo: e.target.value })}
+            >
+              <MenuItem value="ACTIVO">Activo</MenuItem>
+              <MenuItem value="PASIVO">Pasivo</MenuItem>
+              <MenuItem value="PATRIMONIO">Patrimonio</MenuItem>
+              <MenuItem value="INGRESO">Ingreso</MenuItem>
+              <MenuItem value="GASTO">Gasto</MenuItem>
+            </TextField>
+          </Grid>
+          <Grid item xs={12}>
+            <Button type="submit" variant="contained" color="primary" fullWidth>
+              Crear Cuenta
+            </Button>
+          </Grid>
+        </Grid>
+      </form>
+    </Paper>
   );
 }
 
- export default NuevaCuentaForm;
+export default NuevaCuentaForm;
