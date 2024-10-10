@@ -13,6 +13,15 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: false
     },
+    subtotal: {
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: false
+    },
+    impuestos: {
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: false,
+      defaultValue: 0
+    },
     total: {
       type: DataTypes.DECIMAL(10, 2),
       allowNull: false
@@ -22,5 +31,13 @@ module.exports = (sequelize, DataTypes) => {
       defaultValue: 'PENDIENTE'
     }
   });
+
+  Factura.associate = (models) => {
+    Factura.belongsToMany(models.Impuesto, {
+      through: 'FacturaImpuestos',
+      as: 'impuestosAplicados'
+    });
+  };
+
   return Factura;
 };

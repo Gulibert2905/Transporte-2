@@ -117,8 +117,26 @@ function FacturaVenta() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (nuevaFactura.items.length === 0) {
+      alert('La factura debe tener al menos un item');
+      return;
+    }
+    if (!nuevaFactura.numero || !nuevaFactura.fecha || !nuevaFactura.cliente) {
+      alert('Por favor, complete todos los campos obligatorios');
+      return;
+    }
     try {
-      await axios.post('/api/factura-venta', nuevaFactura);
+      const facturaData = {
+        ...nuevaFactura,
+        items: nuevaFactura.items.map(item => ({
+          descripcion: item.descripcion,
+          cantidad: parseInt(item.cantidad),
+          precioUnitario: parseFloat(item.precioUnitario),
+          total: parseFloat(item.total)
+        })),
+        impuestosAplicados: [] // Si no estás manejando impuestos, envía un array vacío
+      };
+      await axios.post('/api/factura-venta', facturaData);
       fetchFacturas();
       setNuevaFactura({
         numero: '',
@@ -129,9 +147,10 @@ function FacturaVenta() {
         iva: 0,
         total: 0
       });
-      setTabValue(1); // Cambiar a la pestaña de lista de facturas después de crear una nueva
+      setTabValue(1);
     } catch (error) {
-      console.error('Error al crear la factura:', error);
+      console.error('Error al crear la factura:', error.response?.data?.message || error.message);
+      // Aquí podrías mostrar un mensaje de error al usuario
     }
   };
 

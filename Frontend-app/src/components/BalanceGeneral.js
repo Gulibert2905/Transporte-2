@@ -11,25 +11,19 @@ function BalanceGeneral() {
     const fetchBalance = async () => {
       try {
         setLoading(true);
-        const res = await axios.get('/api/contabilidad/balance-general');
+        const fechaActual = new Date().toISOString().split('T')[0]; // Formato YYYY-MM-DD
+        const res = await axios.get(`/api/contabilidad/balance-general?fecha=${fechaActual}`);
+        console.log('Respuesta del servidor:', res.data); // Para depuración
         setBalance(res.data);
         setLoading(false);
       } catch (error) {
         console.error('Error fetching balance:', error);
-        setError('Error al cargar el balance general');
+        setError('Error al cargar el balance general: ' + (error.response?.data?.message || error.message));
         setLoading(false);
       }
     };
     fetchBalance();
   }, []);
-
-  const exportPDF = () => {
-    window.open('/api/contabilidad/balance-general/pdf', '_blank');
-  };
-
-  const exportExcel = () => {
-    window.open('/api/contabilidad/balance-general/excel', '_blank');
-  };
 
   if (loading) {
     return <CircularProgress />;
@@ -40,37 +34,33 @@ function BalanceGeneral() {
   }
 
   if (!balance) {
-    return <Typography>No hay datos disponibles</Typography>;
+    return <Typography>No hay datos de Balance General disponibles para la fecha seleccionada.</Typography>;
   }
+
+   // Función para formatear números
+   const formatNumber = (value) => {
+    if (value === undefined || value === null) return '0.00';
+    return typeof value === 'number' ? value.toFixed(2) : '0.00';
+  };
 
   return (
     <Box>
       <Typography variant="h5" gutterBottom>
         Balance General
       </Typography>
-
       <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
         <Grid container spacing={2}>
           <Grid item xs={12} md={4}>
-            <Typography variant="h6">Activos: ${balance.activos?.toFixed(2) || '0.00'}</Typography>
+            <Typography variant="h6">Activos: ${formatNumber(balance.activos)}</Typography>
           </Grid>
           <Grid item xs={12} md={4}>
-            <Typography variant="h6">Pasivos: ${balance.pasivos?.toFixed(2) || '0.00'}</Typography>
+            <Typography variant="h6">Pasivos: ${formatNumber(balance.pasivos)}</Typography>
           </Grid>
           <Grid item xs={12} md={4}>
-            <Typography variant="h6">Patrimonio: ${balance.patrimonio?.toFixed(2) || '0.00'}</Typography>
+            <Typography variant="h6">Patrimonio: ${formatNumber(balance.patrimonio)}</Typography>
           </Grid>
         </Grid>
       </Paper>
-
-      <Box display="flex" justifyContent="space-between">
-        <Button variant="contained" color="primary" onClick={exportPDF}>
-          Exportar a PDF
-        </Button>
-        <Button variant="contained" color="secondary" onClick={exportExcel}>
-          Exportar a Excel
-        </Button>
-      </Box>
     </Box>
   );
 }

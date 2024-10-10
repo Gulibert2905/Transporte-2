@@ -1,8 +1,8 @@
 const { MovimientoCuenta, Cuenta, sequelize } = require('../models');
+const contabilidadService = require('../services/contabilidadService');
 
 exports.crearMovimiento = async (req, res) => {
-  const t = await sequelize.transaction();
-
+  const transaction = await sequelize.transaction();
   try {
     const { fecha, descripcion, cuentaId, monto, tipo } = req.body;
 
@@ -12,9 +12,9 @@ exports.crearMovimiento = async (req, res) => {
       cuentaId,
       monto,
       tipo
-    }, { transaction: t });
+    }, { transaction });
 
-    const cuenta = await Cuenta.findByPk(cuentaId, { transaction: t });
+    const cuenta = await Cuenta.findByPk(cuentaId, { transaction });
     if (!cuenta) {
       throw new Error('Cuenta no encontrada');
     }
@@ -24,12 +24,21 @@ exports.crearMovimiento = async (req, res) => {
     } else {
       cuenta.saldo -= parseFloat(monto);
     }
-    await cuenta.save({ transaction: t });
+    await cuenta.save({ transaction });
 
-    await t.commit();
+    await contabilidadService.manejarMovimientosContables({ fecha, numero: movimiento.id }, [{
+      codigo: cuenta.codigo,
+      nombre: cuenta.nombre,
+      tipo: cuenta.tipo,
+      monto,
+      esDebito: tipo === 'DEBITO'
+    }], movimiento, transaction);
+
+    await transaction.commit();
     res.status(201).json(movimiento);
   } catch (error) {
-    await t.rollback();
+    await transaction.rollback();
+    console.error('Error al crear movimiento de cuenta:', error);
     res.status(400).json({ message: error.message });
   }
 };
@@ -45,6 +54,7 @@ exports.obtenerMovimientos = async (req, res) => {
     });
     res.json(movimientos);
   } catch (error) {
+    console.error('Error al obtener movimientos de cuenta:', error);
     res.status(500).json({ message: error.message });
   }
 };

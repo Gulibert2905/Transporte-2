@@ -29,10 +29,7 @@ module.exports = (sequelize, DataTypes) => {
   });
 
   MovimientoCuenta.associate = (models) => {
-    MovimientoCuenta.belongsTo(models.Cuenta, { 
-      foreignKey: 'cuentaId',
-      as: 'cuenta'
-    });
+    MovimientoCuenta.belongsTo(models.Cuenta, { foreignKey: 'cuentaId', as: 'cuenta' });
     MovimientoCuenta.belongsTo(models.Transaccion, { 
       foreignKey: 'TransaccionId',
       as: 'transaccion'

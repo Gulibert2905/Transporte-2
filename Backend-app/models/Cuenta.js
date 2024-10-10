@@ -21,6 +21,7 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       allowNull: true
     }
+    
   }, {
     tableName: 'Cuenta',
     indexes: [
@@ -43,10 +44,7 @@ module.exports = (sequelize, DataTypes) => {
       as: 'cuentaPadre',
       foreignKey: 'cuentaPadreId'
     });
-    Cuenta.hasMany(models.MovimientoCuenta, { 
-      foreignKey: 'cuentaId',
-      as: 'movimientos'
-    });
+    Cuenta.hasMany(models.MovimientoCuenta, { foreignKey: 'cuentaId', as: 'movimientos' });
   };
 
   return Cuenta;

@@ -48,6 +48,8 @@ const facturaRoutes = require("./routes/facturaRoutes")
 const notaContabilidadRoutes = require('./routes/notaContabilidadRoutes');
 const cuentaRoutes = require("./routes/cuentaRoutes")
 const transaccionesRoutes = require('./routes/transaccionesRoutes');
+const impuestoRoutes = require('./routes/impuestoRoutes');
+
 // Log de modelos cargados
 console.log('Modelos cargados:', Object.keys(db));
 
@@ -68,6 +70,7 @@ app.use('/api/notas-debito-credito', notaDebitoCreditoRoutes);
 app.use('/api/notas-contabilidad', notaContabilidadRoutes);
 app.use("/api/cuenta", cuentaRoutes);
 app.use("/api/factura-venta", facturaRoutes);
+app.use('/api/impuestos', impuestoRoutes);
 app.use('/api', authRoutes);
 
 
