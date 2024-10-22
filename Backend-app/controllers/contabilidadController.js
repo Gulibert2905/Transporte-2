@@ -7,16 +7,10 @@ exports.getBalanceGeneral = async (req, res) => {
   try {
     const { fecha } = req.query;
     if (!fecha) {
-      return res.status(400).json({ message: 'La fecha es requerida' });
+      return res.status(400).json({ message: 'Se requiere la fecha' });
     }
     console.log('Obteniendo Balance General para fecha:', fecha);
     const balanceGeneral = await contabilidadService.balanceGeneral.obtener(fecha);
-    console.log('Balance General obtenido:', balanceGeneral);
-
-    if (!balanceGeneral) {
-      return res.status(404).json({ message: 'No se encontró Balance General para la fecha especificada' });
-    }
-
     res.json(balanceGeneral);
   } catch (error) {
     console.error('Error al obtener balance general:', error);
@@ -50,21 +44,10 @@ exports.getEstadoResultados = async (req, res) => {
   try {
     const { fechaInicio, fechaFin } = req.query;
     if (!fechaInicio || !fechaFin) {
-      return res.status(400).json({ message: 'Fechas de inicio y fin son requeridas' });
+      return res.status(400).json({ message: 'Se requieren fechas de inicio y fin' });
     }
-    console.log('Obteniendo Estado de Resultados para fechas:', { fechaInicio, fechaFin });
     const estadoResultados = await contabilidadService.estadoResultados.obtener(fechaInicio, fechaFin);
-    console.log('Estado de Resultados obtenido:', estadoResultados);
-    
-    // Asegurarse de que todos los valores son numéricos
-    const response = {
-      ...estadoResultados,
-      ingresos: parseFloat(estadoResultados.ingresos) || 0,
-      gastos: parseFloat(estadoResultados.gastos) || 0,
-      utilidad: parseFloat(estadoResultados.utilidad) || 0
-    };
-    
-    res.json(response);
+    res.json(estadoResultados);
   } catch (error) {
     console.error('Error al obtener estado de resultados:', error);
     res.status(500).json({ message: 'Error al obtener estado de resultados', error: error.message });

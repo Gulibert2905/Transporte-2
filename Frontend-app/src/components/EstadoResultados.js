@@ -52,7 +52,7 @@ function EstadoResultados() {
   // Función para formatear números
   const formatNumber = (value) => {
     if (value === undefined || value === null) return '0.00';
-    return typeof value === 'number' ? value.toFixed(2) : '0.00';
+    return typeof value === 'number' ? value.toFixed(2) : parseFloat(value).toFixed(2) || '0.00';
   };
 
   return (
@@ -81,10 +81,10 @@ function EstadoResultados() {
       <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
         <Grid container spacing={2}>
           <Grid item xs={12} md={4}>
-            <Typography variant="h6">Ingresos: ${formatNumber(resultados.totalIngresos)}</Typography>
+            <Typography variant="h6">Ingresos: ${formatNumber(resultados.ingresos)}</Typography>
           </Grid>
           <Grid item xs={12} md={4}>
-            <Typography variant="h6">Gastos: ${formatNumber(resultados.totalGastos)}</Typography>
+            <Typography variant="h6">Gastos: ${formatNumber(resultados.gastos)}</Typography>
           </Grid>
           <Grid item xs={12} md={4}>
             <Typography variant="h6">Utilidad: ${formatNumber(resultados.utilidad)}</Typography>

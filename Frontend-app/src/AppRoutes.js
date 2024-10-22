@@ -10,6 +10,7 @@ import Tarifas from './pages/Tarifas';
 import Viajes from './components/Viajes';
 import Home from './pages/Home';
 import Dashboard from './components/Dashboard';
+import DashboardFinanciero from './components/DashboardFinanciero';
 import Unauthorized from './components/Unauthorized';
 import SelectUser from './components/SelectUser';
 import ModuloContabilidad from './components/ModuloContabilidad';
@@ -28,23 +29,21 @@ function Navigation() {
         </Typography>
         {user ? (
           <>
-            
             {(user.rol === 'admin' || user.rol === 'contador') && (
               <>
                 <Button color="inherit" component={Link} to="/prestadores">Prestadores</Button>
                 <Button color="inherit" component={Link} to="/rutas">Rutas</Button>
                 <Button color="inherit" component={Link} to="/tarifas">Tarifas</Button>
-                
               </>
             )}
             <Button color="inherit" component={Link} to="/viajes">Viajes</Button>
             <Button color="inherit" component={Link} to="/dashboard">Dashboard</Button>
             {user.rol === 'contador' && (
-              <Button color="inherit" component={Link} to="/contabilidad">Contabilidad</Button>
-              
-              
+              <>
+                <Button color="inherit" component={Link} to="/contabilidad">Contabilidad</Button>
+                <Button color="inherit" component={Link} to="/dashboard-financiero">Dashboard Financiero</Button>
+              </>
             )}
-            
             {isDevelopment && !user && (
               <Button color="inherit" component={Link} to="/select-user">Seleccionar Usuario (Dev)</Button>
             )}
@@ -76,6 +75,15 @@ function AppRoutes() {
               element={
                 <ProtectedRoute roles={['contador']}>
                   <ModuloContabilidad />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/dashboard-financiero"
+              element={
+                <ProtectedRoute roles={['contador']}>
+                  <DashboardFinanciero />
                 </ProtectedRoute>
               }
             />
@@ -113,4 +121,3 @@ function AppRoutes() {
 }
 
 export default AppRoutes;
-

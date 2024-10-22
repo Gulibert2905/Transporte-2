@@ -8,26 +8,34 @@ exports.crearNomina = async (req, res) => {
     const { empleado_id, periodo, salario_base, deducciones, bonificaciones } = req.body;
 
     if (!empleado_id || !periodo || !salario_base) {
-      return res.status(400).json({ message: 'Faltan datos obligatorios' });
+      throw new Error('Faltan datos obligatorios');
     }
 
     const empleado = await Empleado.findByPk(empleado_id);
     if (!empleado) {
-      return res.status(400).json({ message: 'Empleado no encontrado' });
+      throw new Error('Empleado no encontrado');
     }
 
-    const total_pagar = salario_base - deducciones + bonificaciones;
+    const total_pagar = parseFloat(salario_base) - parseFloat(deducciones || 0) + parseFloat(bonificaciones || 0);
 
     const nomina = await Nomina.create({
       empleado_id,
       periodo,
       salario_base,
-      deducciones,
-      bonificaciones,
+      deducciones: deducciones || 0,
+      bonificaciones: bonificaciones || 0,
       total_pagar
     }, { transaction });
 
-    await contabilidadService.actualizarPorNomina(nomina, transaction);
+    console.log('Nómina creada:', nomina.toJSON());
+
+    // Verificamos que la función exista antes de llamarla
+    if (typeof contabilidadService.transacciones.actualizarPorNomina !== 'function') {
+      throw new Error('La función actualizarPorNomina no está definida en el servicio de contabilidad');
+    }
+
+    // Llamamos a la función correctamente
+    await contabilidadService.transacciones.actualizarPorNomina(nomina, transaction);
 
     await transaction.commit();
     res.status(201).json(nomina);
