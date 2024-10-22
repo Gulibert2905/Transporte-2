@@ -95,32 +95,69 @@ const contabilidadService = {
 
   planCuentas: {
     actualizar: async (documento, tipo, transaction) => {
-      console.log(`Actualizando Plan de Cuentas para ${tipo}`);
-      switch (tipo) {
-        case 'VENTA':
-          await contabilidadService.auxiliares.incrementarSaldoCuenta('1010', documento.total, transaction);
-          await contabilidadService.auxiliares.incrementarSaldoCuenta('4010', documento.subtotal, transaction);
-          await contabilidadService.auxiliares.incrementarSaldoCuenta('2110', documento.impuestos, transaction);
-          break;
-        case 'COMPRA':
-          await contabilidadService.auxiliares.incrementarSaldoCuenta('1110', documento.subtotal, transaction);
-          await contabilidadService.auxiliares.incrementarSaldoCuenta('1190', documento.impuestos, transaction);
-          await contabilidadService.auxiliares.incrementarSaldoCuenta('2010', documento.total, transaction);
-          break;
-        case 'EGRESO':
-          await contabilidadService.auxiliares.decrementarSaldoCuenta('2010', documento.monto, transaction);
-          await contabilidadService.auxiliares.decrementarSaldoCuenta('1010', documento.monto, transaction);
-          break;
-        case 'INGRESO':
-          await contabilidadService.auxiliares.incrementarSaldoCuenta('1010', documento.monto, transaction);
-          await contabilidadService.auxiliares.incrementarSaldoCuenta('4010', documento.monto, transaction);
-          break;
-        case 'NOMINA':
-          await contabilidadService.auxiliares.incrementarSaldoCuenta('5010', documento.total_pagar, transaction);
-          await contabilidadService.auxiliares.decrementarSaldoCuenta('1010', documento.total_pagar, transaction);
-          break;
-        default:
-          throw new Error(`Tipo de transacción no soportado: ${tipo}`);
+      console.log(`Actualizando Plan de Cuentas para ${tipo}`, documento);
+      try {
+        switch (tipo) {
+          case 'VENTA':
+            await Promise.all([
+              contabilidadService.auxiliares.incrementarSaldoCuenta('1010', parseFloat(documento.total), transaction),
+              contabilidadService.auxiliares.incrementarSaldoCuenta('4010', parseFloat(documento.subtotal), transaction),
+              contabilidadService.auxiliares.incrementarSaldoCuenta('2110', parseFloat(documento.impuestos), transaction)
+            ]);
+            break;
+  
+          case 'COMPRA':
+            const total = parseFloat(documento.total) || 0;
+            const subtotal = parseFloat(documento.subtotal) || (total / 1.19);
+            const impuestos = parseFloat(documento.impuestos) || (total - subtotal);
+  
+            await Promise.all([
+              contabilidadService.auxiliares.incrementarSaldoCuenta('1110', subtotal, transaction),
+              contabilidadService.auxiliares.incrementarSaldoCuenta('1190', impuestos, transaction),
+              contabilidadService.auxiliares.incrementarSaldoCuenta('2010', total, transaction),
+              contabilidadService.auxiliares.incrementarSaldoCuenta('5000', subtotal, transaction) // Registrar el gasto
+            ]);
+            break;
+  
+          case 'EGRESO':
+            const montoEgreso = parseFloat(documento.monto) || 0;
+            await Promise.all([
+              contabilidadService.auxiliares.decrementarSaldoCuenta('2010', montoEgreso, transaction),
+              contabilidadService.auxiliares.decrementarSaldoCuenta('1010', montoEgreso, transaction),
+              contabilidadService.auxiliares.incrementarSaldoCuenta('5000', montoEgreso, transaction) // Registrar el gasto
+            ]);
+            break;
+  
+          case 'INGRESO':
+            const montoIngreso = parseFloat(documento.monto) || 0;
+            await Promise.all([
+              contabilidadService.auxiliares.incrementarSaldoCuenta('1010', montoIngreso, transaction),
+              contabilidadService.auxiliares.incrementarSaldoCuenta('4010', montoIngreso, transaction)
+            ]);
+            break;
+  
+          case 'NOMINA':
+            const montoPagar = parseFloat(documento.total_pagar) || 0;
+            await Promise.all([
+              contabilidadService.auxiliares.incrementarSaldoCuenta('5010', montoPagar, transaction),
+              contabilidadService.auxiliares.decrementarSaldoCuenta('1010', montoPagar, transaction)
+            ]);
+            break;
+  
+          default:
+            throw new Error(`Tipo de transacción no soportado: ${tipo}`);
+        }
+  
+        // Actualizar balance general y estado de resultados después de cada transacción
+        await Promise.all([
+          contabilidadService.balanceGeneral.actualizar(documento.fecha || new Date(), transaction),
+          contabilidadService.estadoResultados.actualizar(documento.fecha || new Date(), transaction)
+        ]);
+  
+        console.log('Plan de cuentas actualizado exitosamente');
+      } catch (error) {
+        console.error('Error al actualizar plan de cuentas:', error);
+        throw error;
       }
     },
   
@@ -160,57 +197,82 @@ const contabilidadService = {
         if (!fecha || isNaN(new Date(fecha).getTime())) {
           throw new Error('Fecha inválida');
         }
-    
+  
         const fechaFormateada = new Date(fecha).toISOString().split('T')[0];
-    
+        console.log('Generando Balance General para fecha:', fechaFormateada);
+  
+        // Obtener todas las cuentas con sus saldos
         const cuentas = await Cuenta.findAll({
           attributes: [
-            'id', 'codigo', 'nombre', 'tipo',
-            [sequelize.fn('SUM', sequelize.col('movimientos.monto')), 'saldo']
+            'codigo',
+            'nombre',
+            'tipo',
+            'saldo'
           ],
-          include: [{
-            model: MovimientoCuenta,
-            as: 'movimientos',
-            attributes: [],
-            where: {
-              fecha: { [Op.lte]: fechaFormateada }
-            },
-            required: false
-          }],
           where: {
-            tipo: { [Op.in]: ['ACTIVO', 'PASIVO', 'PATRIMONIO'] }
+            tipo: {
+              [Op.in]: ['ACTIVO', 'PASIVO', 'PATRIMONIO']
+            }
           },
-          group: ['Cuenta.id'],
-          having: sequelize.literal('saldo IS NOT NULL AND saldo != 0'),
-          order: [['codigo', 'ASC']]
+          raw: true
         });
-    
-        const activos = cuentas.filter(c => c.tipo === 'ACTIVO');
-        const pasivos = cuentas.filter(c => c.tipo === 'PASIVO');
-        const patrimonio = cuentas.filter(c => c.tipo === 'PATRIMONIO');
-    
-        const totalActivos = activos.reduce((sum, c) => sum + parseFloat(c.get('saldo') || 0), 0);
-        const totalPasivos = pasivos.reduce((sum, c) => sum + parseFloat(c.get('saldo') || 0), 0);
-        const totalPatrimonio = patrimonio.reduce((sum, c) => sum + parseFloat(c.get('saldo') || 0), 0);
-    
-        return {
-          fecha: fechaFormateada,
-          activos,
-          pasivos,
-          patrimonio,
+  
+        console.log('Cuentas encontradas:', cuentas);
+  
+        // Calcular totales
+        const totalActivos = cuentas
+          .filter(cuenta => cuenta.tipo === 'ACTIVO')
+          .reduce((sum, cuenta) => sum + parseFloat(cuenta.saldo || 0), 0);
+  
+        const totalPasivos = cuentas
+          .filter(cuenta => cuenta.tipo === 'PASIVO')
+          .reduce((sum, cuenta) => sum + parseFloat(cuenta.saldo || 0), 0);
+  
+        // Calcular patrimonio como activos - pasivos más cualquier cuenta de patrimonio
+        const patrimonioBase = totalActivos - totalPasivos;
+        const patrimonioAdicional = cuentas
+          .filter(cuenta => cuenta.tipo === 'PATRIMONIO')
+          .reduce((sum, cuenta) => sum + parseFloat(cuenta.saldo || 0), 0);
+  
+        const totalPatrimonio = patrimonioBase + patrimonioAdicional;
+  
+        console.log('Totales calculados:', {
           totalActivos,
           totalPasivos,
+          patrimonioBase,
+          patrimonioAdicional,
           totalPatrimonio
+        });
+  
+        // Guardar el balance generado
+        const balanceGeneral = await BalanceGeneral.create({
+          fecha: fechaFormateada,
+          activos: totalActivos,
+          pasivos: totalPasivos,
+          patrimonio: totalPatrimonio
+        });
+  
+        return {
+          fecha: fechaFormateada,
+          activos: totalActivos,
+          pasivos: totalPasivos,
+          patrimonio: totalPatrimonio,
+          detalle: {
+            activos: cuentas.filter(c => c.tipo === 'ACTIVO'),
+            pasivos: cuentas.filter(c => c.tipo === 'PASIVO'),
+            patrimonio: cuentas.filter(c => c.tipo === 'PATRIMONIO')
+          }
         };
       } catch (error) {
         console.error('Error al generar balance general:', error);
         throw error;
       }
     },
+  
     actualizar: async (fecha, transaction) => {
-      console.log('Iniciando actualización de Balance General para:', fecha);
+      console.log('Actualizando Balance General para fecha:', fecha);
       try {
-        const [activos, pasivos, patrimonio] = await Promise.all([
+        const [activos, pasivos] = await Promise.all([
           Cuenta.sum('saldo', { 
             where: { tipo: 'ACTIVO' },
             transaction 
@@ -218,61 +280,77 @@ const contabilidadService = {
           Cuenta.sum('saldo', { 
             where: { tipo: 'PASIVO' },
             transaction 
-          }),
-          Cuenta.sum('saldo', { 
-            where: { tipo: 'PATRIMONIO' },
-            transaction 
           })
         ]);
-        console.log('Sumas calculadas:', { activos, pasivos, patrimonio });
   
-        if (!BalanceGeneral) {
-          throw new Error('Modelo BalanceGeneral no está definido');
-        }
+        const totalActivos = parseFloat(activos || 0);
+        const totalPasivos = parseFloat(pasivos || 0);
+        const totalPatrimonio = totalActivos - totalPasivos;
   
-        const [balanceGeneral, created] = await BalanceGeneral.upsert({
+        console.log('Saldos calculados:', {
+          totalActivos,
+          totalPasivos,
+          totalPatrimonio
+        });
+  
+        const [balanceGeneral] = await BalanceGeneral.upsert({
           fecha,
-          activos: activos || 0,
-          pasivos: pasivos || 0,
-          patrimonio: patrimonio || 0
+          activos: totalActivos,
+          pasivos: totalPasivos,
+          patrimonio: totalPatrimonio
         }, { transaction });
   
-        console.log('Balance General actualizado:', balanceGeneral.get());
         return balanceGeneral;
       } catch (error) {
-        console.error('Error en actualizar Balance General:', error);
+        console.error('Error al actualizar Balance General:', error);
         throw error;
       }
     },
+  
     obtener: async (fecha) => {
       console.log('Obteniendo Balance General para fecha:', fecha);
       const fechaFormateada = new Date(fecha).toISOString().split('T')[0];
-      console.log('Fecha formateada:', fechaFormateada);
   
-      let balance = await BalanceGeneral.findOne({
-        where: { fecha: fechaFormateada },
-        order: [['createdAt', 'DESC']]
-      });
+      try {
+        let balance = await BalanceGeneral.findOne({
+          where: { fecha: fechaFormateada },
+          order: [['createdAt', 'DESC']]
+        });
   
-      if (!balance) {
-        console.log('No se encontró Balance General para la fecha especificada. Generando uno nuevo...');
-        balance = await contabilidadService.balanceGeneral.generar(fechaFormateada);
-        
-        if (balance) {
-          await BalanceGeneral.create({
+        if (!balance) {
+          console.log('No se encontró Balance General, generando uno nuevo...');
+          const nuevoBalance = await contabilidadService.balanceGeneral.generar(fechaFormateada);
+          balance = await BalanceGeneral.create({
             fecha: fechaFormateada,
-            activos: balance.totalActivos,
-            pasivos: balance.totalPasivos,
-            patrimonio: balance.totalPatrimonio
+            activos: nuevoBalance.activos,
+            pasivos: nuevoBalance.pasivos,
+            patrimonio: nuevoBalance.activos - nuevoBalance.pasivos
           });
-          console.log('Nuevo Balance General creado y guardado en la base de datos.');
+        } else {
+          // Asegurar que el patrimonio esté actualizado
+          const patrimonioCalculado = balance.activos - balance.pasivos;
+          if (balance.patrimonio !== patrimonioCalculado) {
+            balance.patrimonio = patrimonioCalculado;
+            await balance.save();
+          }
         }
-      }
   
-      console.log('Balance General encontrado o generado:', balance);
-      return balance;
+        const result = {
+          fecha: fechaFormateada,
+          activos: parseFloat(balance.activos || 0),
+          pasivos: parseFloat(balance.pasivos || 0),
+          patrimonio: parseFloat(balance.patrimonio || 0)
+        };
+  
+        console.log('Balance General obtenido:', result);
+        return result;
+      } catch (error) {
+        console.error('Error al obtener Balance General:', error);
+        throw error;
+      }
     }
   },
+  
 
   estadoResultados: {
     generar: async (fechaInicio, fechaFin) => {

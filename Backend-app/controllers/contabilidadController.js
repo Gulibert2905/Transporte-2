@@ -18,6 +18,23 @@ exports.getBalanceGeneral = async (req, res) => {
   }
 };
 
+// Nuevo método para generar balance general
+exports.getBalanceGeneralGenerado = async (req, res) => {
+  try {
+    const { fecha } = req.query;
+    if (!fecha) {
+      return res.status(400).json({ message: 'La fecha es requerida' });
+    }
+    console.log('Generando Balance General para fecha:', fecha);
+    const balanceGeneral = await contabilidadService.balanceGeneral.generar(fecha);
+    console.log('Balance General generado:', balanceGeneral);
+    res.json(balanceGeneral);
+  } catch (error) {
+    console.error('Error al generar balance general:', error);
+    res.status(500).json({ message: 'Error al generar balance general', error: error.message });
+  }
+};
+
 exports.getLibroDiario = async (req, res) => {
   try {
     const { fechaInicio, fechaFin } = req.query;
@@ -51,6 +68,23 @@ exports.getEstadoResultados = async (req, res) => {
   } catch (error) {
     console.error('Error al obtener estado de resultados:', error);
     res.status(500).json({ message: 'Error al obtener estado de resultados', error: error.message });
+  }
+};
+
+// Nuevo método para generar estado de resultados
+exports.getEstadoResultadosGenerado = async (req, res) => {
+  try {
+    const { fechaInicio, fechaFin } = req.query;
+    if (!fechaInicio || !fechaFin) {
+      return res.status(400).json({ message: 'Las fechas de inicio y fin son requeridas' });
+    }
+    console.log('Generando Estado de Resultados para fechas:', { fechaInicio, fechaFin });
+    const estadoResultados = await contabilidadService.estadoResultados.generar(fechaInicio, fechaFin);
+    console.log('Estado de Resultados generado:', estadoResultados);
+    res.json(estadoResultados);
+  } catch (error) {
+    console.error('Error al generar estado de resultados:', error);
+    res.status(500).json({ message: 'Error al generar estado de resultados', error: error.message });
   }
 };
 

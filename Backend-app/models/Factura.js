@@ -14,16 +14,16 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false
     },
     subtotal: {
-      type: DataTypes.DECIMAL(10, 2),
+      type: DataTypes.DECIMAL(20, 2),
       allowNull: false
     },
     impuestos: {
-      type: DataTypes.DECIMAL(10, 2),
+      type: DataTypes.DECIMAL(20, 2),
       allowNull: false,
       defaultValue: 0
     },
     total: {
-      type: DataTypes.DECIMAL(10, 2),
+      type: DataTypes.DECIMAL(20, 2),
       allowNull: false
     },
     estado: {
