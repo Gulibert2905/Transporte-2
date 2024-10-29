@@ -1,0 +1,20 @@
+# Logs
+logs/*
+!logs/.gitkeep
+
+# Environment
+.env*
+!.env.example
+
+# Dependencies
+node_modules/
+backups/
+
+# Build
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
+

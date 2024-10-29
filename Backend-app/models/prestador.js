@@ -19,7 +19,17 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: false
     },
-    contacto: DataTypes.STRING
+    contacto: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: {
+        isCelular(value) {
+          if (!value.match(/^3\d{9}$/)) {
+            throw new Error('El contacto debe ser un número de celular válido (10 dígitos comenzando con 3)');
+          }
+        }
+      }
+    }
   }, {
     sequelize,
     modelName: 'Prestador',

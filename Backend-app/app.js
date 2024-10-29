@@ -1,98 +1,106 @@
+require('dotenv').config({
+  path: process.env.NODE_ENV === 'production' 
+    ? '.env.production' 
+    : '.env.development'
+});
+
 const express = require('express');
 const cors = require('cors');
-const bodyParser = require('body-parser');
-const authRoutes = require('./routes/authRoutes');
-require('dotenv').config();
+const morgan = require('morgan');
+const helmet = require('helmet');
+const compression = require('compression');
+const { logger, requestLogger } = require('./services/logger');
 const db = require('./models');
 
+// Importar rutas
+const authRoutes = require('./routes/authRoutes');
+const routes = {
+  prestadores: require('./routes/prestadoresRoutes'),
+  rutas: require('./routes/rutasRoutes'),
+  tarifas: require('./routes/tarifasRoutes'),
+  viajes: require('./routes/viajesRoutes'),
+  reportes: require('./routes/reporteRoutes'),
+  dashboard: require('./routes/dashboardRoutes'),
+  contabilidad: require('./routes/contabilidadRoutes'),
+  nomina: require('./routes/nominaRoutes'),
+  comprobanteEgreso: require('./routes/comprobanteEgresoRoutes'),
+  reciboCaja: require('./routes/reciboCajaRoutes'),
+  facturaCompra: require('./routes/facturaCompraRoutes'),
+  notaDebitoCredito: require('./routes/notaDebitoCreditoRoutes'),
+  notaContabilidad: require('./routes/notaContabilidadRoutes'),
+  cuenta: require('./routes/cuentaRoutes'),
+  facturaVenta: require('./routes/facturaRoutes'),
+  impuestos: require('./routes/impuestoRoutes'),
+  transacciones: require('./routes/transaccionesRoutes')
+};
 
 const app = express();
 
-if (process.env.NODE_ENV !== 'production') {
-  app.use(cors());
-} else {
-  app.use(cors({
-    origin: 'https://tu-dominio-de-produccion.com'
-  }));
-}
-
-// Middleware
-
-
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+// Middleware básicos
+app.use(helmet({
+  contentSecurityPolicy: false,
+}));
+app.use(morgan('dev'));
+app.use(cors());
+app.use(compression());
 app.use(express.json());
-app.use((req, res, next) => {
-  console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
-  next();
-});
+app.use(express.urlencoded({ extended: true }));
+app.use(requestLogger);
 
-app.get('/', (req, res) => {
-  res.send('Servidor backend funcionando correctamente');
-});
-
-// Importar rutas
-const prestadoresRoutes = require('./routes/prestadoresRoutes');
-const rutasRoutes = require('./routes/rutasRoutes');
-const tarifasRoutes = require('./routes/tarifasRoutes');
-const viajesRoutes = require('./routes/viajesRoutes');
-const reporteRoutes = require('./routes/reporteRoutes');
-const dashboardRoutes = require('./routes/dashboardRoutes');
-const contabilidadRoutes = require('./routes/contabilidadRoutes');
-const nominaRoutes = require('./routes/nominaRoutes');
-const comprobanteEgresoRoutes = require('./routes/comprobanteEgresoRoutes');
-const reciboCajaRoutes = require('./routes/reciboCajaRoutes');
-const facturaCompraRoutes = require('./routes/facturaCompraRoutes');
-const notaDebitoCreditoRoutes = require('./routes/notaDebitoCreditoRoutes');
-const facturaRoutes = require("./routes/facturaRoutes")
-const notaContabilidadRoutes = require('./routes/notaContabilidadRoutes');
-const cuentaRoutes = require("./routes/cuentaRoutes")
-const transaccionesRoutes = require('./routes/transaccionesRoutes');
-const impuestoRoutes = require('./routes/impuestoRoutes');
-
-// Log de modelos cargados
-console.log('Modelos cargados:', Object.keys(db));
-
-// Usar rutas
-app.use('/api/prestadores', prestadoresRoutes);
-app.use('/api/rutas', rutasRoutes);
-app.use('/api/transacciones', transaccionesRoutes);
-app.use('/api/tarifas', tarifasRoutes);
-app.use('/api/viajes', viajesRoutes);
-app.use('/api/reportes', reporteRoutes);
-app.use('/api/dashboard', dashboardRoutes);
-app.use('/api/contabilidad', contabilidadRoutes);
-app.use('/api/nominas', nominaRoutes);
-app.use('/api/comprobantes-egreso', comprobanteEgresoRoutes);
-app.use('/api/recibos-caja', reciboCajaRoutes);
-app.use('/api/facturas-compra', facturaCompraRoutes);
-app.use('/api/notas-debito-credito', notaDebitoCreditoRoutes);
-app.use('/api/notas-contabilidad', notaContabilidadRoutes);
-app.use("/api/cuenta", cuentaRoutes);
-app.use("/api/factura-venta", facturaRoutes);
-app.use('/api/impuestos', impuestoRoutes);
+// Rutas de autenticación - Importante: debe ir antes de las otras rutas
 app.use('/api', authRoutes);
 
+// Otras rutas
+Object.entries(routes).forEach(([name, router]) => {
+  if (name !== 'auth') { // Evitamos duplicar las rutas de auth
+    app.use(`/api/${name.replace(/([A-Z])/g, '-$1').toLowerCase()}`, router);
+  }
+});
 
+// Manejador de rutas no encontradas
+app.use((req, res) => {
+  logger.debug(`Ruta no encontrada: ${req.method} ${req.url}`);
+  res.status(404).json({
+    error: {
+      message: 'Ruta no encontrada',
+      path: req.url,
+      method: req.method
+    }
+  });
+});
 
+// Manejo de errores
+app.use((err, req, res, next) => {
+  logger.error({
+    message: err.message,
+    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+  });
+
+  res.status(err.status || 500).json({
+    error: {
+      message: process.env.NODE_ENV === 'production' 
+        ? 'Error interno del servidor' 
+        : err.message
+    }
+  });
+});
+
+// Inicialización del servidor
 const PORT = process.env.PORT || 3000;
 
 db.sequelize.sync({ alter: false })
   .then(() => {
-    console.log('Conexión a la base de datos establecida correctamente.');
+    logger.info('Conexión a la base de datos establecida correctamente.');
     app.listen(PORT, () => {
-      console.log(`Servidor corriendo en el puerto ${PORT}`);
+      logger.info(`Servidor corriendo en el puerto ${PORT} en modo ${process.env.NODE_ENV}`);
+      logger.info('Rutas disponibles:');
+      logger.info('- POST /api/login');
+      logger.info('- GET /api/validate-token');
     });
   })
   .catch(err => {
-    console.error('Error al conectar con la base de datos:', err);
+    logger.error('Error al conectar con la base de datos:', err);
     process.exit(1);
   });
-
-// Manejo de errores global
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).send('¡Algo salió mal!');
-});
 
 module.exports = app;
