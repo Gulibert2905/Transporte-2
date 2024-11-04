@@ -14,6 +14,7 @@ const db = require('./models');
 
 // Importar rutas
 const authRoutes = require('./routes/authRoutes');
+const userRoutes = require('./routes/userRoutes');
 const routes = {
   prestadores: require('./routes/prestadoresRoutes'),
   rutas: require('./routes/rutasRoutes'),
@@ -41,15 +42,19 @@ app.use(helmet({
   contentSecurityPolicy: false,
 }));
 app.use(morgan('dev'));
-app.use(cors());
+app.use(cors({
+  origin: process.env.CORS_ORIGIN || 'http://localhost:3001',
+  credentials: true
+}));
 app.use(compression());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(requestLogger);
 
-// Rutas de autenticación - Importante: debe ir antes de las otras rutas
-app.use('/api', authRoutes);
 
+// Rutas de autenticación - Importante: debe ir antes de las otras rutas
+app.use('/api/auth', authRoutes); // Rutas de autenticación
+app.use('/api/users', userRoutes); // Rutas de gestión de usuarios
 // Otras rutas
 Object.entries(routes).forEach(([name, router]) => {
   if (name !== 'auth') { // Evitamos duplicar las rutas de auth

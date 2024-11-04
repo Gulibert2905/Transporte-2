@@ -10,9 +10,12 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false
       },
       rol: {
-        type: DataTypes.ENUM('admin', 'contador', 'administrativo'),
-        allowNull: false
-      }
+        type: DataTypes.ENUM('admin', 'contador', 'administrativo', 'operador'),
+        allowNull: false,
+        validate: {
+            isIn: [['admin', 'contador', 'administrativo', 'operador']]
+        }
+    },
     }, {
       tableName: 'usuarios', // Esto es crucial
       timestamps: true // Asegúrate de que esto coincida con tu estructura de tabla

@@ -1,67 +1,92 @@
-import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
-import axios from 'axios';
+import React, { createContext, useState, useContext, useEffect } from 'react';
+import axios from '../utils/axios';
 
 const AuthContext = createContext(null);
 
-export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+export const useAuth = () => useContext(AuthContext);
 
-  useEffect(() => {
-    const initAuth = async () => {
-      const token = localStorage.getItem('token');
-      if (token) {
-        try {
-          axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-          const response = await axios.get(`${process.env.REACT_APP_API_URL}/validate-token`);
-          setUser(response.data.user);
-        } catch (error) {
-          console.error('Error validating token:', error);
-          localStorage.removeItem('token');
-          delete axios.defaults.headers.common['Authorization'];
+export const AuthProvider = ({ children }) => {
+    const [user, setUser] = useState(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const token = localStorage.getItem('token');
+        const storedUser = localStorage.getItem('user');
+        
+        if (token && storedUser) {
+            setUser(JSON.parse(storedUser));
         }
-      }
-      setLoading(false);
+        setLoading(false);
+    }, []);
+
+    const login = async (username, password) => {
+        try {
+            console.log('Intentando login en:', `${process.env.REACT_APP_API_URL}/auth/login`);
+            
+            const response = await axios.post('/auth/login', {
+                username,
+                password
+            });
+
+            const { token, user } = response.data;
+
+            localStorage.setItem('token', token);
+            localStorage.setItem('user', JSON.stringify(user));
+            
+            setUser(user);
+            
+            console.log('Login exitoso - Usuario:', user);
+            
+            return { success: true, user };
+        } catch (error) {
+            console.error('Error de login:', error.response?.data || error);
+            throw error;
+        }
     };
 
-    initAuth();
-  }, []);
+    const logout = () => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        setUser(null);
+    };
 
-  const login = useCallback(async (username, password) => {
-    try {
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:3000/api';
-      console.log('API URL:', apiUrl);
-      const loginUrl = `${apiUrl}/login`;
-      console.log('Intentando login en:', loginUrl);
-      const response = await axios.post(loginUrl, { username, password });
-      const { token, user } = response.data;
-      localStorage.setItem('token', token);
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      setUser(user);
-      console.log("Login exitoso - Usuario:", user);
-    } catch (error) {
-      console.error('Error de login:', error.response ? error.response.data : error.message);
-      throw error;
-    }
-  }, []);
+    const validateToken = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            if (!token) return false;
 
-  const logout = useCallback(() => {
-    localStorage.removeItem('token');
-    delete axios.defaults.headers.common['Authorization'];
-    setUser(null);
-  }, []);
+            const response = await axios.post('/auth/validate-token', { token });
+            return response.data.success;
+        } catch (error) {
+            console.error('Error validando token:', error);
+            logout();
+            return false;
+        }
+    };
 
-  return (
-    <AuthContext.Provider value={{ user, login, logout, loading }}>
-      {children}
-    </AuthContext.Provider>
-  );
-};
+    const changePassword = async (currentPassword, newPassword) => {
+        try {
+            const response = await axios.post('/auth/change-password', {
+                currentPassword,
+                newPassword
+            });
+            return response.data;
+        } catch (error) {
+            console.error('Error cambiando contraseña:', error);
+            throw error;
+        }
+    };
 
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
+    return (
+        <AuthContext.Provider value={{
+            user,
+            loading,
+            login,
+            logout,
+            validateToken,
+            changePassword
+        }}>
+            {children}
+        </AuthContext.Provider>
+    );
 };

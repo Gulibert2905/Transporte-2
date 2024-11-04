@@ -1,180 +1,130 @@
 const express = require('express');
 const router = express.Router();
-const authController = require('../controllers/authController');
-const { authenticateToken, authorize } = require('../middleware/auth');
+const { authenticateToken } = require('../middleware/auth'); // Añadido
+const { Usuario } = require('../models');
+const crypto = require('crypto');
+const jwt = require('jsonwebtoken');
+const { logger } = require('../services/logger');
 
-// Ruta de login (pública)
-router.post('/login', authController.login);
+// Login (no necesita autenticación)
+router.post('/login', async (req, res) => {
+    try {
+        const { username, password } = req.body;
+        logger.debug('Intento de login:', { username });
 
-// Ruta de prueba para verificar autenticación
-router.get('/test', authenticateToken, (req, res) => {
-    res.json({
-        message: 'Ruta protegida funcionando',
-        user: req.user
-    });
+        const user = await Usuario.findOne({ where: { username } });
+        if (!user) {
+            return res.status(401).json({
+                success: false,
+                message: 'Credenciales inválidas'
+            });
+        }
+
+        const hashedPassword = crypto.createHash('sha256')
+            .update(password)
+            .digest('hex');
+
+        if (hashedPassword !== user.password) {
+            return res.status(401).json({
+                success: false,
+                message: 'Credenciales inválidas'
+            });
+        }
+
+        const token = jwt.sign(
+            { 
+                id: user.id, 
+                username: user.username, 
+                rol: user.rol 
+            },
+            process.env.JWT_SECRET,
+            { expiresIn: '24h' }
+        );
+
+        logger.info('Login exitoso:', { username, rol: user.rol });
+
+        res.json({
+            success: true,
+            token,
+            user: {
+                id: user.id,
+                username: user.username,
+                rol: user.rol
+            }
+        });
+    } catch (error) {
+        logger.error('Error en login:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error en el servidor',
+            error: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
+    }
 });
 
-// Gestión de usuarios (solo admin)
-router.get('/users', 
-    authenticateToken, 
-    authorize('admin'), 
-    async (req, res) => {
-        try {
-            const users = await Usuario.findAll({
-                attributes: ['id', 'username', 'rol', 'createdAt']
-            });
-            res.json({ success: true, users });
-        } catch (error) {
-            res.status(500).json({ 
-                success: false, 
-                message: 'Error al obtener usuarios' 
-            });
-        }
-    }
-);
-
-// Crear nuevo usuario (solo admin)
-router.post('/users', 
-    authenticateToken, 
-    authorize('admin'), 
-    async (req, res) => {
-        try {
-            const { username, password, rol } = req.body;
-            
-            if (!username || !password || !rol) {
-                return res.status(400).json({
-                    success: false,
-                    message: 'Todos los campos son requeridos'
-                });
+// Validar token
+router.post('/validate-token', authenticateToken, async (req, res) => {
+    try {
+        res.json({
+            success: true,
+            user: {
+                id: req.user.id,
+                username: req.user.username,
+                rol: req.user.rol
             }
+        });
+    } catch (error) {
+        logger.error('Error validando token:', error);
+        res.status(401).json({
+            success: false,
+            message: 'Token inválido o expirado'
+        });
+    }
+});
 
-            const hashedPassword = crypto.createHash('sha256')
-                .update(password)
-                .digest('hex');
-
-            const user = await Usuario.create({
-                username,
-                password: hashedPassword,
-                rol
-            });
-
-            res.status(201).json({
-                success: true,
-                user: {
-                    id: user.id,
-                    username: user.username,
-                    rol: user.rol
-                }
-            });
-        } catch (error) {
-            res.status(500).json({ 
-                success: false, 
-                message: 'Error al crear usuario' 
+// Cambiar contraseña (requiere autenticación)
+router.post('/change-password', authenticateToken, async (req, res) => {
+    try {
+        const { currentPassword, newPassword } = req.body;
+        
+        if (!currentPassword || !newPassword) {
+            return res.status(400).json({
+                success: false,
+                message: 'La contraseña actual y nueva son requeridas'
             });
         }
-    }
-);
 
-// Actualizar usuario
-router.put('/users/:id', 
-    authenticateToken, 
-    authorize('admin'), 
-    async (req, res) => {
-        try {
-            const { username, rol } = req.body;
-            const user = await Usuario.findByPk(req.params.id);
+        const hashedCurrentPassword = crypto.createHash('sha256')
+            .update(currentPassword)
+            .digest('hex');
             
-            if (!user) {
-                return res.status(404).json({
-                    success: false,
-                    message: 'Usuario no encontrado'
-                });
-            }
-
-            await user.update({ username, rol });
-            
-            res.json({
-                success: true,
-                user: {
-                    id: user.id,
-                    username: user.username,
-                    rol: user.rol
-                }
-            });
-        } catch (error) {
-            res.status(500).json({ 
-                success: false, 
-                message: 'Error al actualizar usuario' 
+        if (hashedCurrentPassword !== req.user.password) {
+            return res.status(401).json({
+                success: false,
+                message: 'Contraseña actual incorrecta'
             });
         }
+
+        const hashedNewPassword = crypto.createHash('sha256')
+            .update(newPassword)
+            .digest('hex');
+
+        await req.user.update({ password: hashedNewPassword });
+        
+        logger.info('Contraseña actualizada exitosamente para usuario:', req.user.username);
+        
+        res.json({
+            success: true,
+            message: 'Contraseña actualizada correctamente'
+        });
+    } catch (error) {
+        logger.error('Error al cambiar contraseña:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Error al cambiar contraseña',
+            error: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
     }
-);
-
-// Eliminar usuario
-router.delete('/users/:id', 
-    authenticateToken, 
-    authorize('admin'), 
-    async (req, res) => {
-        try {
-            const user = await Usuario.findByPk(req.params.id);
-            
-            if (!user) {
-                return res.status(404).json({
-                    success: false,
-                    message: 'Usuario no encontrado'
-                });
-            }
-
-            await user.destroy();
-            
-            res.json({
-                success: true,
-                message: 'Usuario eliminado correctamente'
-            });
-        } catch (error) {
-            res.status(500).json({ 
-                success: false, 
-                message: 'Error al eliminar usuario' 
-            });
-        }
-    }
-);
-
-// Cambiar contraseña (cualquier usuario autenticado)
-router.post('/change-password', 
-    authenticateToken, 
-    async (req, res) => {
-        try {
-            const { currentPassword, newPassword } = req.body;
-            
-            const hashedCurrentPassword = crypto.createHash('sha256')
-                .update(currentPassword)
-                .digest('hex');
-                
-            if (hashedCurrentPassword !== req.user.password) {
-                return res.status(401).json({
-                    success: false,
-                    message: 'Contraseña actual incorrecta'
-                });
-            }
-
-            const hashedNewPassword = crypto.createHash('sha256')
-                .update(newPassword)
-                .digest('hex');
-
-            await req.user.update({ password: hashedNewPassword });
-            
-            res.json({
-                success: true,
-                message: 'Contraseña actualizada correctamente'
-            });
-        } catch (error) {
-            res.status(500).json({ 
-                success: false, 
-                message: 'Error al cambiar contraseña' 
-            });
-        }
-    }
-);
+});
 
 module.exports = router;

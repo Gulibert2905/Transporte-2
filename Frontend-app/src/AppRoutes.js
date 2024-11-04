@@ -1,9 +1,11 @@
 import React from 'react';
 import { Routes, Route, Link, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import DashboardLayout from './components/DashboardLayout';
 import PrivateRoute from './components/PrivateRoute';
 import ProtectedRoute from './components/ProtectedRoute';
 import Login from './components/Login';
+import UsersManagement from './components/UsersManagement';
 import Prestadores from './components/Prestadores';
 import Rutas from './pages/Rutas';
 import Tarifas from './pages/Tarifas';
@@ -60,63 +62,122 @@ function Navigation() {
 function AppRoutes() {
   const isDevelopment = process.env.REACT_APP_ENV === 'development';
 
+  // Componente de ruta protegida con layout
+  const ProtectedRoute = ({ children, roles = [] }) => {
+      const { user } = useAuth();
+      
+      if (!user) {
+          return <Navigate to="/login" />;
+      }
+
+      if (roles.length && !roles.includes(user.rol)) {
+          return <Navigate to="/unauthorized" />;
+      }
+
+      return <DashboardLayout>{children}</DashboardLayout>;
+  };
+
   return (
-    <AuthProvider>
-      <Box sx={{ flexGrow: 1 }}>
-        <Navigation />
-        <Container>
+      <AuthProvider>
           <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/select-user" element={<SelectUser />} />
+              {/* Rutas públicas */}
+              <Route path="/login" element={<Login />} />
+              <Route path="/unauthorized" element={<Unauthorized />} />
+              {isDevelopment && (
+                  <Route path="/select-user" element={<SelectUser />} />
+              )}
 
-            <Route
-              path="/contabilidad"
-              element={
-                <ProtectedRoute roles={['contador']}>
-                  <ModuloContabilidad />
-                </ProtectedRoute>
-              }
-            />
+              {/* Ruta principal */}
+              <Route
+                  path="/"
+                  element={
+                      <ProtectedRoute>
+                          <Home />
+                      </ProtectedRoute>
+                  }
+              />
 
-            <Route
-              path="/dashboard-financiero"
-              element={
-                <ProtectedRoute roles={['contador']}>
-                  <DashboardFinanciero />
-                </ProtectedRoute>
-              }
-            />
+              {/* Dashboard general */}
+              <Route
+                  path="/dashboard"
+                  element={
+                      <ProtectedRoute>
+                          <Dashboard />
+                      </ProtectedRoute>
+                  }
+              />
 
-            <Route path="/unauthorized" element={<Unauthorized />} />
+              {/* Rutas para admin y contador */}
+              <Route
+                  path="/prestadores"
+                  element={
+                      <ProtectedRoute roles={['admin', 'contador']}>
+                          <Prestadores />
+                      </ProtectedRoute>
+                  }
+              />
 
-            <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
-            <Route path="/prestadores" element={
-              <PrivateRoute allowedRoles={['admin', 'contador']}>
-                <Prestadores />
-              </PrivateRoute>
-            } />
-            <Route path="/rutas" element={
-              <PrivateRoute allowedRoles={['admin', 'contador']}>
-                <Rutas />
-              </PrivateRoute>
-            } />
-            <Route path="/tarifas" element={
-              <PrivateRoute allowedRoles={['admin', 'contador']}>
-                <Tarifas />
-              </PrivateRoute>
-            } />
-            <Route path="/viajes" element={<PrivateRoute><Viajes /></PrivateRoute>} />
-            
-            {isDevelopment && (
-              <Route path="/select-user" element={<SelectUser />} />
-            )}
+              <Route
+                  path="/rutas"
+                  element={
+                      <ProtectedRoute roles={['admin', 'contador']}>
+                          <Rutas />
+                      </ProtectedRoute>
+                  }
+              />
 
-            <Route path="*" element={<Navigate to="/" />} />
+              <Route
+                  path="/tarifas"
+                  element={
+                      <ProtectedRoute roles={['admin', 'contador']}>
+                          <Tarifas />
+                      </ProtectedRoute>
+                  }
+              />
+
+              {/* Rutas para todos los usuarios autenticados */}
+              <Route
+                  path="/viajes"
+                  element={
+                      <ProtectedRoute>
+                          <Viajes />
+                      </ProtectedRoute>
+                  }
+              />
+
+              {/* Rutas exclusivas para contador */}
+              <Route
+                  path="/contabilidad"
+                  element={
+                      <ProtectedRoute roles={['contador']}>
+                          <ModuloContabilidad />
+                      </ProtectedRoute>
+                  }
+              />
+
+              <Route
+                  path="/dashboard-financiero"
+                  element={
+                      <ProtectedRoute roles={['contador']}>
+                          <DashboardFinanciero />
+                      </ProtectedRoute>
+                  }
+              />
+
+              {/* Rutas exclusivas para admin */}
+              <Route
+                  path="/users"
+                  element={
+                      <ProtectedRoute roles={['admin']}>
+                          <UsersManagement />
+                      </ProtectedRoute>
+                  }
+              />
+
+              {/* Ruta para cualquier otra URL no definida */}
+              <Route path="*" element={<Navigate to="/" />} />
           </Routes>
-        </Container>
-      </Box>
-    </AuthProvider>
+      </AuthProvider>
   );
 }
 
