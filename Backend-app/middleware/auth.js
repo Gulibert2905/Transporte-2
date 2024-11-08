@@ -4,48 +4,57 @@ const { logger } = require('../services/logger');
 
 const authenticateToken = async (req, res, next) => {
     try {
+        console.log('Request Headers:', req.headers);
         const authHeader = req.headers.authorization;
-        const token = authHeader && authHeader.split(' ')[1];
 
-        if (!token) {
+        if (!authHeader) {
+            console.log('No authorization header found');
             return res.status(401).json({
                 success: false,
-                message: 'Token de autenticación no proporcionado'
+                message: 'No authorization header'
             });
         }
 
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        
-        // Log para debugging
-        logger.debug('Token decodificado:', decoded);
+        const [bearer, token] = authHeader.split(' ');
 
-        // Verificar que el usuario existe
-        const user = await Usuario.findByPk(decoded.id);
-        
-        // Log para debugging
-        logger.debug('Usuario encontrado:', user ? 'Sí' : 'No');
-
-        if (!user) {
+        if (bearer !== 'Bearer' || !token) {
+            console.log('Invalid authorization format');
             return res.status(401).json({
                 success: false,
-                message: 'Usuario no encontrado'
+                message: 'Invalid authorization format'
             });
         }
 
-        req.user = user;
-        next();
+        try {
+            const decoded = jwt.verify(token, process.env.JWT_SECRET);
+            console.log('Decoded token:', decoded);
+
+            const user = await Usuario.findByPk(decoded.id);
+            if (!user) {
+                console.log('User not found:', decoded.id);
+                return res.status(401).json({
+                    success: false,
+                    message: 'User not found'
+                });
+            }
+
+            req.user = user;
+            next();
+        } catch (jwtError) {
+            console.log('JWT verification failed:', jwtError.message);
+            return res.status(401).json({
+                success: false,
+                message: 'Invalid or expired token'
+            });
+        }
     } catch (error) {
-        logger.error('Error en autenticación:', {
-            error: error.message,
-            stack: error.stack
-        });
-        return res.status(401).json({
+        console.error('Authentication error:', error);
+        return res.status(500).json({
             success: false,
-            message: 'Token inválido o expirado'
+            message: 'Server error during authentication'
         });
     }
 };
-
 const authorize = (...roles) => {
     return (req, res, next) => {
         logger.debug('Verificando autorización:', {

@@ -136,14 +136,14 @@ function AppRoutes() {
               />
 
               {/* Rutas para todos los usuarios autenticados */}
-              <Route
-                  path="/viajes"
-                  element={
-                      <ProtectedRoute>
-                          <Viajes />
-                      </ProtectedRoute>
-                  }
-              />
+              <Route 
+                    path="/viajes" 
+                    element={
+                        <ProtectedRoute roles={['admin', 'contador', 'operador']}>
+                            <Viajes />
+                        </ProtectedRoute>
+                    } 
+                />
 
               {/* Rutas exclusivas para contador */}
               <Route

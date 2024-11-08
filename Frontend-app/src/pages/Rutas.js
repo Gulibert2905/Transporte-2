@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import axiosInstance from '../utils/axios';
 import {
   Container,
   Typography,
@@ -41,7 +41,9 @@ function Rutas() {
   const fetchRutas = async (page = 1, limit = 10) => {
     try {
       setLoading(true);
-      const response = await axios.get(`http://localhost:3000/api/rutas?page=${page}&limit=${limit}`);
+      const response = await axiosInstance.get(`/rutas`, {
+        params: { page, limit }
+      });
       setRutasData(response.data);
       setLoading(false);
     } catch (err) {
@@ -58,7 +60,7 @@ function Rutas() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post('http://localhost:3000/api/rutas', newRuta);
+      await axiosInstance.post('/rutas', newRuta);
       setNewRuta({ origen: '', destino: '', distancia: '' });
       fetchRutas();
     } catch (err) {
@@ -70,24 +72,18 @@ function Rutas() {
   const handleFileUpload = async (event) => {
     const file = event.target.files[0];
     if (!file) return;
-  
-    console.log('Archivo seleccionado:', {
-      nombre: file.name,
-      tipo: file.type,
-      tamaño: file.size
-    });
-  
+
     const fileExtension = file.name.split('.').pop().toLowerCase();
     if (!['xlsx', 'xls'].includes(fileExtension)) {
       setError('Por favor, seleccione un archivo Excel (.xlsx o .xls)');
       return;
     }
-  
+
     const formData = new FormData();
     formData.append('file', file);
-  
+
     try {
-      const response = await axios.post('http://localhost:3000/api/rutas/import', formData, {
+      const response = await axiosInstance.post('/rutas/import', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },

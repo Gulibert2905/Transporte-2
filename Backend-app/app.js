@@ -14,26 +14,24 @@ const db = require('./models');
 
 // Importar rutas
 const authRoutes = require('./routes/authRoutes');
+const prestadoresRoutes = require('./routes/prestadoresRoutes');
+const rutasRoutes = require('./routes/rutasRoutes');
+const tarifasRoutes = require('./routes/tarifasRoutes');
+const viajesRoutes = require('./routes/viajesRoutes');
+const reportesRoutes = require('./routes/reporteRoutes');
+const dashboardRoutes = require('./routes/dashboardRoutes');
+const contabilidadRoutes = require('./routes/contabilidadRoutes');
+const nominaRoutes = require('./routes/nominaRoutes');
+const comprobanteEgresoRoutes = require('./routes/comprobanteEgresoRoutes');
+const reciboCajaRoutes = require('./routes/reciboCajaRoutes');
+const facturaCompraRoutes = require('./routes/facturaCompraRoutes');
+const notaDebitoCreditoRoutes = require('./routes/notaDebitoCreditoRoutes');
+const notaContabilidadRoutes = require('./routes/notaContabilidadRoutes');
+const cuentaRoutes = require('./routes/cuentaRoutes');
+const facturaRoutes = require('./routes/facturaRoutes');
+const impuestosRoutes = require('./routes/impuestoRoutes');
+const transaccionesRoutes = require('./routes/transaccionesRoutes');
 const userRoutes = require('./routes/userRoutes');
-const routes = {
-  prestadores: require('./routes/prestadoresRoutes'),
-  rutas: require('./routes/rutasRoutes'),
-  tarifas: require('./routes/tarifasRoutes'),
-  viajes: require('./routes/viajesRoutes'),
-  reportes: require('./routes/reporteRoutes'),
-  dashboard: require('./routes/dashboardRoutes'),
-  contabilidad: require('./routes/contabilidadRoutes'),
-  nomina: require('./routes/nominaRoutes'),
-  comprobanteEgreso: require('./routes/comprobanteEgresoRoutes'),
-  reciboCaja: require('./routes/reciboCajaRoutes'),
-  facturaCompra: require('./routes/facturaCompraRoutes'),
-  notaDebitoCredito: require('./routes/notaDebitoCreditoRoutes'),
-  notaContabilidad: require('./routes/notaContabilidadRoutes'),
-  cuenta: require('./routes/cuentaRoutes'),
-  facturaVenta: require('./routes/facturaRoutes'),
-  impuestos: require('./routes/impuestoRoutes'),
-  transacciones: require('./routes/transaccionesRoutes')
-};
 
 const app = express();
 
@@ -44,23 +42,37 @@ app.use(helmet({
 app.use(morgan('dev'));
 app.use(cors({
   origin: process.env.CORS_ORIGIN || 'http://localhost:3001',
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
 }));
 app.use(compression());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(requestLogger);
 
+// Rutas públicas
+app.use('/api/auth', authRoutes);
 
-// Rutas de autenticación - Importante: debe ir antes de las otras rutas
-app.use('/api/auth', authRoutes); // Rutas de autenticación
-app.use('/api/users', userRoutes); // Rutas de gestión de usuarios
-// Otras rutas
-Object.entries(routes).forEach(([name, router]) => {
-  if (name !== 'auth') { // Evitamos duplicar las rutas de auth
-    app.use(`/api/${name.replace(/([A-Z])/g, '-$1').toLowerCase()}`, router);
-  }
-});
+// Rutas protegidas
+app.use('/api/users', userRoutes);
+app.use('/api/prestadores', prestadoresRoutes);
+app.use('/api/rutas', rutasRoutes);
+app.use('/api/tarifas', tarifasRoutes);
+app.use('/api/viajes', viajesRoutes);
+app.use('/api/reportes', reportesRoutes);
+app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/contabilidad', contabilidadRoutes);
+app.use('/api/nominas', nominaRoutes);
+app.use('/api/comprobantes-egreso', comprobanteEgresoRoutes);
+app.use('/api/recibos-caja', reciboCajaRoutes);
+app.use('/api/facturas-compra', facturaCompraRoutes);
+app.use('/api/notas-debito-credito', notaDebitoCreditoRoutes);
+app.use('/api/notas-contabilidad', notaContabilidadRoutes);
+app.use('/api/cuenta', cuentaRoutes);
+app.use('/api/factura-venta', facturaRoutes);
+app.use('/api/impuestos', impuestosRoutes);
+app.use('/api/transacciones', transaccionesRoutes);
 
 // Manejador de rutas no encontradas
 app.use((req, res) => {
@@ -78,13 +90,16 @@ app.use((req, res) => {
 app.use((err, req, res, next) => {
   logger.error({
     message: err.message,
-    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
+    path: req.path,
+    method: req.method,
+    body: req.body
   });
 
   res.status(err.status || 500).json({
     error: {
-      message: process.env.NODE_ENV === 'production' 
-        ? 'Error interno del servidor' 
+      message: process.env.NODE_ENV === 'production'
+        ? 'Error interno del servidor'
         : err.message
     }
   });
@@ -99,8 +114,8 @@ db.sequelize.sync({ alter: false })
     app.listen(PORT, () => {
       logger.info(`Servidor corriendo en el puerto ${PORT} en modo ${process.env.NODE_ENV}`);
       logger.info('Rutas disponibles:');
-      logger.info('- POST /api/login');
-      logger.info('- GET /api/validate-token');
+      logger.info('- POST /api/auth/login');
+      logger.info('- GET /api/auth/validate-token');
     });
   })
   .catch(err => {

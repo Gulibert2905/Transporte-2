@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import axiosInstance from '../utils/axios';
 import {
   Container,
   Typography,
@@ -21,6 +21,7 @@ import {
   Alert,
   Pagination
 } from '@mui/material';
+
 
 function Tarifas() {
   const [tarifasData, setTarifasData] = useState({
@@ -45,7 +46,9 @@ function Tarifas() {
   const fetchTarifas = async (page = 1, limit = 10) => {
     try {
       setLoading(true);
-      const response = await axios.get(`http://localhost:3000/api/tarifas?page=${page}&limit=${limit}`);
+      const response = await axiosInstance.get(`/tarifas`, {
+        params: { page, limit }
+      });
       setTarifasData(response.data);
       setLoading(false);
     } catch (err) {
@@ -57,7 +60,7 @@ function Tarifas() {
 
   const fetchPrestadores = async () => {
     try {
-      const response = await axios.get('http://localhost:3000/api/prestadores');
+      const response = await axiosInstance.get('/prestadores');
       setPrestadores(response.data.prestadores);
     } catch (err) {
       console.error('Error fetching prestadores:', err);
@@ -67,7 +70,7 @@ function Tarifas() {
 
   const fetchRutas = async () => {
     try {
-      const response = await axios.get('http://localhost:3000/api/rutas');
+      const response = await axiosInstance.get('/rutas');
       setRutas(response.data.rutas);
     } catch (err) {
       console.error('Error fetching rutas:', err);
@@ -82,9 +85,9 @@ function Tarifas() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post('http://localhost:3000/api/tarifas', newTarifa);
+      await axiosInstance.post('/tarifas', newTarifa);
       setNewTarifa({ prestador_nit: '', ruta_id: '', tarifa: '' });
-      fetchTarifas(1); // Refetch first page after adding new tarifa
+      fetchTarifas(1);
       setSuccess('Tarifa añadida exitosamente');
       setError(null);
     } catch (err) {

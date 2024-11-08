@@ -9,6 +9,7 @@ import {
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import * as xlsx from 'xlsx';
+import axiosInstance from '../utils/axios';
 
 function Prestadores() {
   const [prestadoresData, setPrestadoresData] = useState({
@@ -26,18 +27,26 @@ function Prestadores() {
     value: /^3\d{9}$/,
     message: "Debe ser un número de celular válido (10 dígitos comenzando con 3)"
   };
+
   const fetchPrestadores = useCallback(async (page = 1, limit = 10) => {
     try {
-      setLoading(true);
-      const response = await axios.get(`${process.env.REACT_APP_API_URL}/prestadores?page=${page}&limit=${limit}`);
-      setPrestadoresData(response.data);
-      setLoading(false);
+        setLoading(true);
+        console.log('Fetching prestadores...');
+        console.log('Token:', localStorage.getItem('token')); // Debug token
+
+        const response = await axiosInstance.get(`/prestadores`, {
+            params: { page, limit }
+        });
+
+        console.log('Prestadores response:', response.data);
+        setPrestadoresData(response.data);
+        setLoading(false);
     } catch (err) {
-      setError('Error al cargar los prestadores');
-      setLoading(false);
-      console.error('Error fetching prestadores:', err);
+        console.error('Error fetching prestadores:', err.response || err);
+        setError('Error al cargar los prestadores: ' + (err.response?.data?.message || err.message));
+        setLoading(false);
     }
-  }, []);
+}, []);
 
   useEffect(() => {
     fetchPrestadores();
@@ -46,10 +55,9 @@ function Prestadores() {
   const onSubmit = async (data) => {
     try {
       if (editingPrestador) {
-        await axios.put(`${process.env.REACT_APP_API_URL}/prestadores/${editingPrestador.nit}`, data);
-        setEditingPrestador(null);
+        await axiosInstance.put(`/prestadores/${editingPrestador.nit}`, data);
       } else {
-        await axios.post(`${process.env.REACT_APP_API_URL}/prestadores`, data);
+        await axiosInstance.post(`/prestadores`, data);
       }
       reset();
       fetchPrestadores();
@@ -69,7 +77,7 @@ function Prestadores() {
   const handleDelete = async (nit) => {
     if (window.confirm('¿Está seguro de que desea eliminar este prestador?')) {
       try {
-        await axios.delete(`${process.env.REACT_APP_API_URL}/prestadores/${nit}`);
+        await axiosInstance.delete(`/prestadores/${nit}`);
         fetchPrestadores();
       } catch (err) {
         setError('Error al eliminar el prestador');
