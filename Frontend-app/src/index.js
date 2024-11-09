@@ -1,41 +1,20 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { BrowserRouter } from 'react-router-dom';
-import { ThemeProvider, createTheme } from '@mui/material/styles';
+import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
-import AppRoutes from './AppRoutes';
+import App from './App';
+import theme from './theme';
 import './index.css';
 
-// Crear tema personalizado
-const theme = createTheme({
-    palette: {
-        primary: {
-            main: '#1976d2',
-        },
-        secondary: {
-            main: '#dc004e',
-        },
-    },
-    typography: {
-        fontFamily: [
-            'Roboto',
-            '-apple-system',
-            'BlinkMacSystemFont',
-            '"Segoe UI"',
-            'Arial',
-            'sans-serif',
-        ].join(','),
-    },
-});
-
-ReactDOM.render(
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(
     <React.StrictMode>
         <BrowserRouter>
             <ThemeProvider theme={theme}>
                 <CssBaseline />
-                <AppRoutes />
+                <App />
             </ThemeProvider>
         </BrowserRouter>
-    </React.StrictMode>,
-    document.getElementById('root')
+    </React.StrictMode>
 );

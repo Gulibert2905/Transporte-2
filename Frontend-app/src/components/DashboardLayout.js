@@ -13,6 +13,12 @@ import {
     UserPlus
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { 
+    PersonOutline,
+    TransferWithinAStation,
+    AssignmentTurnedIn,
+    Assessment
+} from '@mui/icons-material';
 
 const DashboardLayout = ({ children }) => {
     const { user, logout } = useAuth();
@@ -27,6 +33,33 @@ const DashboardLayout = ({ children }) => {
             icon: <Activity />,
             roles: ['admin', 'contador']
         },
+
+        // Menú de Pacientes y Traslados
+        {
+            title: 'Pacientes',
+            path: '/pacientes',
+            icon: <PersonOutline />,
+            roles: ['admin', 'operador', 'auditor']
+        },
+        {
+            title: 'Traslados',
+            path: '/traslados',
+            icon: <TransferWithinAStation />,
+            roles: ['admin', 'operador']
+        },
+        {
+            title: 'Verificación',
+            path: '/auditor/verificacion',
+            icon: <AssignmentTurnedIn />,
+            roles: ['auditor']
+        },
+        {
+            title: 'Reportes de Traslados',
+            path: '/reportes/traslados',
+            icon: <Assessment />,
+            roles: ['admin', 'auditor']
+        },
+        
         // Menú para admin y contador
         {
             title: 'Prestadores',

@@ -1,15 +1,24 @@
 import { createTheme } from '@mui/material/styles';
 
 const theme = createTheme({
-  palette: {
-    primary: {
-      main: '#1976d2',
+    palette: {
+        primary: {
+            main: '#1976d2',
+        },
+        secondary: {
+            main: '#dc004e',
+        },
     },
-    secondary: {
-      main: '#dc004e',
+    typography: {
+        fontFamily: [
+            'Roboto',
+            '-apple-system',
+            'BlinkMacSystemFont',
+            '"Segoe UI"',
+            'Arial',
+            'sans-serif',
+        ].join(','),
     },
-  },
-  // Puedes personalizar más aspectos del tema aquí
 });
 
 export default theme;

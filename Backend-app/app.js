@@ -11,6 +11,7 @@ const helmet = require('helmet');
 const compression = require('compression');
 const { logger, requestLogger } = require('./services/logger');
 const db = require('./models');
+const { authenticateToken } = require('./middleware/auth');
 
 // Importar rutas
 const authRoutes = require('./routes/authRoutes');
@@ -32,6 +33,8 @@ const facturaRoutes = require('./routes/facturaRoutes');
 const impuestosRoutes = require('./routes/impuestoRoutes');
 const transaccionesRoutes = require('./routes/transaccionesRoutes');
 const userRoutes = require('./routes/userRoutes');
+const pacienteRoutes = require('./routes/pacienteRoutes'); 
+const trasladoRoutes = require('./routes/trasladoRoutes');
 
 const app = express();
 
@@ -54,25 +57,27 @@ app.use(requestLogger);
 // Rutas públicas
 app.use('/api/auth', authRoutes);
 
-// Rutas protegidas
-app.use('/api/users', userRoutes);
-app.use('/api/prestadores', prestadoresRoutes);
-app.use('/api/rutas', rutasRoutes);
-app.use('/api/tarifas', tarifasRoutes);
-app.use('/api/viajes', viajesRoutes);
-app.use('/api/reportes', reportesRoutes);
-app.use('/api/dashboard', dashboardRoutes);
-app.use('/api/contabilidad', contabilidadRoutes);
-app.use('/api/nominas', nominaRoutes);
-app.use('/api/comprobantes-egreso', comprobanteEgresoRoutes);
-app.use('/api/recibos-caja', reciboCajaRoutes);
-app.use('/api/facturas-compra', facturaCompraRoutes);
-app.use('/api/notas-debito-credito', notaDebitoCreditoRoutes);
-app.use('/api/notas-contabilidad', notaContabilidadRoutes);
-app.use('/api/cuenta', cuentaRoutes);
-app.use('/api/factura-venta', facturaRoutes);
-app.use('/api/impuestos', impuestosRoutes);
-app.use('/api/transacciones', transaccionesRoutes);
+// Rutas protegidas - agregar authenticateToken
+app.use('/api/users', authenticateToken, userRoutes);
+app.use('/api/prestadores', authenticateToken, prestadoresRoutes);
+app.use('/api/rutas', authenticateToken, rutasRoutes);
+app.use('/api/tarifas', authenticateToken, tarifasRoutes);
+app.use('/api/viajes', authenticateToken, viajesRoutes);
+app.use('/api/reportes', authenticateToken, reportesRoutes);
+app.use('/api/dashboard', authenticateToken, dashboardRoutes);
+app.use('/api/contabilidad', authenticateToken, contabilidadRoutes);
+app.use('/api/nominas', authenticateToken, nominaRoutes);
+app.use('/api/comprobantes-egreso', authenticateToken, comprobanteEgresoRoutes);
+app.use('/api/recibos-caja', authenticateToken, reciboCajaRoutes);
+app.use('/api/facturas-compra', authenticateToken, facturaCompraRoutes);
+app.use('/api/notas-debito-credito', authenticateToken, notaDebitoCreditoRoutes);
+app.use('/api/notas-contabilidad', authenticateToken, notaContabilidadRoutes);
+app.use('/api/cuenta', authenticateToken, cuentaRoutes);
+app.use('/api/factura-venta', authenticateToken, facturaRoutes);
+app.use('/api/impuestos', authenticateToken, impuestosRoutes);
+app.use('/api/transacciones', authenticateToken, transaccionesRoutes);
+app.use('/api/pacientes', authenticateToken, pacienteRoutes);
+app.use('/api/traslados', authenticateToken, trasladoRoutes);
 
 // Manejador de rutas no encontradas
 app.use((req, res) => {
@@ -85,6 +90,7 @@ app.use((req, res) => {
     }
   });
 });
+
 
 // Manejo de errores
 app.use((err, req, res, next) => {

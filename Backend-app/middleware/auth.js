@@ -4,78 +4,63 @@ const { logger } = require('../services/logger');
 
 const authenticateToken = async (req, res, next) => {
     try {
-        console.log('Request Headers:', req.headers);
         const authHeader = req.headers.authorization;
-
-        if (!authHeader) {
-            console.log('No authorization header found');
+        
+        if (!authHeader?.startsWith('Bearer ')) {
             return res.status(401).json({
                 success: false,
                 message: 'No authorization header'
             });
         }
 
-        const [bearer, token] = authHeader.split(' ');
-
-        if (bearer !== 'Bearer' || !token) {
-            console.log('Invalid authorization format');
-            return res.status(401).json({
-                success: false,
-                message: 'Invalid authorization format'
-            });
-        }
+        const token = authHeader.split(' ')[1];
+        console.log('Token recibido:', token);
 
         try {
             const decoded = jwt.verify(token, process.env.JWT_SECRET);
-            console.log('Decoded token:', decoded);
+            console.log('Token decodificado:', decoded);
 
             const user = await Usuario.findByPk(decoded.id);
             if (!user) {
-                console.log('User not found:', decoded.id);
                 return res.status(401).json({
                     success: false,
-                    message: 'User not found'
+                    message: 'Usuario no encontrado'
                 });
             }
 
             req.user = user;
             next();
         } catch (jwtError) {
-            console.log('JWT verification failed:', jwtError.message);
+            console.log('Error en verificación JWT:', jwtError);
             return res.status(401).json({
                 success: false,
-                message: 'Invalid or expired token'
+                message: 'Token inválido o expirado'
             });
         }
     } catch (error) {
-        console.error('Authentication error:', error);
+        console.error('Error de autenticación:', error);
         return res.status(500).json({
             success: false,
-            message: 'Server error during authentication'
+            message: 'Error del servidor durante la autenticación'
         });
     }
 };
-const authorize = (...roles) => {
+
+const authorize = (...allowedRoles) => {
     return (req, res, next) => {
-        logger.debug('Verificando autorización:', {
-            userRole: req.user?.rol,
-            requiredRoles: roles
-        });
+        console.log('Usuario actual:', req.user);
+        console.log('Roles permitidos:', allowedRoles);
 
         if (!req.user) {
             return res.status(401).json({
                 success: false,
-                message: 'No autorizado'
+                message: 'No autorizado - Usuario no encontrado'
             });
         }
 
-        if (!roles.includes(req.user.rol)) {
-            logger.warn('Intento de acceso no autorizado:', {
-                userId: req.user.id,
-                userRole: req.user.rol,
-                requiredRoles: roles,
-                path: req.path
-            });
+        // Corregir la verificación del rol
+        if (!allowedRoles.some(role => role === req.user.rol)) {
+            console.log(`Usuario ${req.user.rol} no tiene acceso. Roles permitidos:`, allowedRoles);
             return res.status(403).json({
                 success: false,
                 message: 'No tiene permisos para acceder a este recurso'

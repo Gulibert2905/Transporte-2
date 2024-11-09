@@ -3,11 +3,15 @@ const xlsx = require('xlsx');
 
 exports.getAllRutas = async (req, res) => {
   try {
+    const { prestador_id } = req.query; // Nuevo parámetro opcional
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const offset = (page - 1) * limit;
 
+    const whereCondition = prestador_id ? { prestador_id } : {};
+
     const { count, rows: rutas } = await Ruta.findAndCountAll({
+      where: whereCondition, // Filtro opcional por prestador
       limit,
       offset,
       order: [['id', 'ASC']]

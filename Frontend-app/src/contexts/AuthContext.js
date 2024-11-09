@@ -9,25 +9,29 @@ export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
 
-    // Función para verificar el token
-    const validateToken = async () => {
-        const token = localStorage.getItem('token');
-        if (token) {
-            try {
-                const response = await axiosInstance.get('/auth/validate-token');
-                if (response.data.valid) {
-                    setUser(JSON.parse(localStorage.getItem('user')));
-                } else {
+    useEffect(() => {
+        const validateToken = async () => {
+            const token = localStorage.getItem('token');
+            if (token) {
+                try {
+                    const response = await axiosInstance.get('/auth/validate-token');
+                    console.log('Respuesta de validación:', response.data);
+                    
+                    if (response.data.success) {
+                        setUser(response.data.user);
+                    } else {
+                        logout();
+                    }
+                } catch (error) {
+                    console.error('Error validando token:', error);
                     logout();
                 }
-            } catch (error) {
-                logout();
+            } else {
+                setLoading(false);
             }
-        }
-        setLoading(false);
-    };
+            setLoading(false);
+        };
 
-    useEffect(() => {
         validateToken();
     }, []);
 

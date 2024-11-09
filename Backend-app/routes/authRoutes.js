@@ -63,10 +63,11 @@ router.post('/login', async (req, res) => {
 });
 
 // Validar token
-router.post('/validate-token', authenticateToken, async (req, res) => {
+router.get('/validate-token', authenticateToken, async (req, res) => {
     try {
         res.json({
             success: true,
+            valid: true,
             user: {
                 id: req.user.id,
                 username: req.user.username,

@@ -222,4 +222,33 @@ const authController = {
     }
 };
 
+exports.validateToken = async (req, res) => {
+    try {
+        // El token ya fue verificado por el middleware authenticateToken
+        const { id } = req.user;
+        
+        const usuario = await Usuario.findByPk(id, {
+            attributes: ['id', 'username', 'rol'] // No incluir password
+        });
+
+        if (!usuario) {
+            return res.status(401).json({
+                success: false,
+                message: 'Usuario no encontrado'
+            });
+        }
+
+        res.json({
+            success: true,
+            user: usuario
+        });
+    } catch (error) {
+        console.error('Error validando token:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error al validar token'
+        });
+    }
+};
+
 module.exports = authController;
