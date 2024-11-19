@@ -4,50 +4,30 @@ const { Model } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
   class Ruta extends Model {
     static associate(models) {
-      // define associations here
-      Ruta.hasMany(models.Viaje, {
-        foreignKey: 'ruta_id',
-        as: 'Viajes'
-      });
-      Ruta.hasMany(models.Tarifa, {
-        foreignKey: 'ruta_id',
-        as: 'Tarifas'
-      });
+      Ruta.hasMany(models.Viaje, { foreignKey: 'ruta_id', as: 'Viajes' });
+      Ruta.hasMany(models.Tarifa, { foreignKey: 'ruta_id', as: 'Tarifas' });
+      Ruta.belongsToMany(models.Prestador, { through: models.Tarifa, foreignKey: 'ruta_id', otherKey: 'prestador_nit' });
     }
   }
-
+  
   Ruta.init({
-    id: {
-      type: DataTypes.INTEGER,
-      primaryKey: true,
-      autoIncrement: true
-    },
     origen: {
       type: DataTypes.STRING,
-      allowNull: false,
-      validate: {
-        notEmpty: true // Asegura que no esté vacío
-      }
+      allowNull: false
     },
     destino: {
       type: DataTypes.STRING,
-      allowNull: false,
-      validate: {
-        notEmpty: true // Asegura que no esté vacío
-      }
+      allowNull: false
     },
     distancia: {
       type: DataTypes.DECIMAL(10, 2),
-      validate: {
-        isDecimal: true,  // Asegura que sea un valor decimal
-        min: 0  // Asegura que la distancia sea positiva
-      }
+      allowNull: true
     }
   }, {
     sequelize,
     modelName: 'Ruta',
     tableName: 'rutas',
-    timestamps: false  // Desactiva createdAt y updatedAt
+    timestamps: false
   });
 
   return Ruta;

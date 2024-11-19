@@ -5,21 +5,35 @@ const upload = multer();
 const { authenticateToken, authorize } = require('../middleware/auth');
 const prestadorController = require('../controllers/prestadorController');
 
-// Proteger todas las rutas
-router.use(authenticateToken);
+// Ruta principal para obtener prestadores - remover /prestadores del path
+router.get('/',
+    authenticateToken,
+    authorize('admin', 'contador', 'operador', 'auditor'),
+    prestadorController.getAllPrestadores
+);
 
-// Rutas de lectura - acceso para varios roles
-router.get('/', authorize('contador', 'admin', 'operador'), prestadorController.getAllPrestadores);
+router.post('/', 
+    authenticateToken,
+    authorize('admin'), 
+    prestadorController.createPrestador
+);
 
-// Rutas de modificación - solo admin
-router.post('/', authorize('admin'), prestadorController.createPrestador);
-router.put('/:nit', authorize('admin'), prestadorController.updatePrestador);
-router.delete('/:nit', authorize('admin'), prestadorController.deletePrestador);
+router.put('/:nit', 
+    authenticateToken,
+    authorize('admin'), 
+    prestadorController.updatePrestador
+);
 
-// Importación - solo admin
-router.post('/import', 
+router.delete('/:nit', 
+    authenticateToken,
+    authorize('admin'), 
+    prestadorController.deletePrestador
+);
+
+router.post('/import',
+    authenticateToken,
     authorize('admin'),
-    upload.single('file'), 
+    upload.single('file'),
     prestadorController.importFromExcel
 );
 

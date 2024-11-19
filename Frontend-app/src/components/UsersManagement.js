@@ -198,6 +198,7 @@ const UsersManagement = () => {
                                 <MenuItem value="contador">Contador</MenuItem>
                                 <MenuItem value="administrativo">Administrativo</MenuItem>
                                 <MenuItem value="operador">Operador</MenuItem>
+                                <MenuItem value="auditor">Auditor</MenuItem>
                             </Select>
                         </FormControl>
                     </Box>

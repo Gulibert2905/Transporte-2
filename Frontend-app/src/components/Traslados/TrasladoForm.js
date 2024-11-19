@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { debounce } from 'lodash';
 import {
 Box,
@@ -19,24 +19,46 @@ Typography,
 import axiosInstance from '../../utils/axios';
 
 function TrasladoForm({ onSuccess, setError }) {
+    const [prestadores, setPrestadores] = useState([]);
+    const [selectedPrestador, setSelectedPrestador] = useState("");
+
+    const [rutas, setRutas] = useState([]);
+    const [selectedRuta, setSelectedRuta] = useState("");
+
+    const [tarifa, setTarifa] = useState(0);
+
     const [formData, setFormData] = useState({
         paciente_id: '',
         documento_paciente: '',
         fecha_solicitud: '',
         fecha_cita: '',
         hora_cita: '',
+        tipo_atencion: '', // Nuevo campo
+        tipo_traslado: '', // MUNICIPAL o TICKET
+        prioridad: 'MEDIA', // ALTA, MEDIA, BAJA
+        
+        // Acompañante
         requiere_acompanante: false,
         acompanante_tipo_doc: '',
         acompanante_documento: '',
         acompanante_nombres: '',
+        
+        // Ubicaciones
         direccion_origen: '',
         municipio_origen: '',
         direccion_destino: '',
         municipio_destino: '',
+        
+        // Traslado principal
         num_pasajeros: 1,
         num_traslados: 1,
-        tipo_transporte: '',
         valor_traslado: '',
+        
+        // Traslado urbano
+        requiere_urbano: false,
+        num_traslados_urbano: 0,
+        valor_urbano: 0,
+        
         observaciones: ''
     });
 
@@ -69,6 +91,49 @@ function TrasladoForm({ onSuccess, setError }) {
     }
     };
 
+    useEffect(() => {
+        const fetchPrestadores = async () => {
+            try {
+                const response = await axiosInstance.get('/prestadores');
+                setPrestadores(response.data.prestadores); // guardamos la lista de prestadores
+            } catch (error) {
+                console.error('Error al cargar prestadores:', error);
+            }
+        };
+        fetchPrestadores();
+    }, []);
+
+    useEffect(() => {
+        const fetchRutas = async () => {
+            if (!selectedPrestador) return; // Si no hay prestador seleccionado, no cargamos rutas
+            try {
+                const response = await axiosInstance.get(`/rutas?prestador_id=${selectedPrestador}`);
+                setRutas(response.data.rutas); // Guardamos la lista de rutas
+            } catch (error) {
+                console.error('Error al cargar rutas:', error);
+            }
+        };
+        fetchRutas();
+    }, [selectedPrestador]); //
+    
+    useEffect(() => {
+        const fetchTarifa = async () => {
+            if (!selectedPrestador || !selectedRuta) return; // Si faltan datos, no cargamos la tarifa
+            try {
+                const response = await axiosInstance.get(`/tarifas/by-prestador-ruta`, {
+                    params: {
+                        prestador_nit: selectedPrestador,
+                        ruta_id: selectedRuta
+                    }
+                });
+                setTarifa(response.data.tarifa); // Guardamos el valor de la tarifa
+            } catch (error) {
+                console.error('Error al cargar tarifa:', error);
+            }
+        };
+        fetchTarifa();
+    }, [selectedPrestador, selectedRuta]);
+
     // Manejar cambios en el formulario
     const handleChange = (e) => {
     const { name, value, checked, type } = e.target;
@@ -78,42 +143,50 @@ function TrasladoForm({ onSuccess, setError }) {
     }));
     };
     console.log(formData.paciente_id);
+
     // Manejar envío del formulario
     const handleSubmit = async (e) => {
         e.preventDefault();
+        
         try {
+            if (!selectedRuta || !selectedPrestador) {
+                setError('Debe seleccionar un prestador y una ruta');
+                return;
+            }
+    
+            const rutaSeleccionada = rutas.find(r => r.id === selectedRuta);
+            if (!rutaSeleccionada) {
+                setError('No se encontró la ruta seleccionada');
+                return;
+            }
+    
             const dataToSend = {
-                ...formData,
-                valor_total: Number(formData.valor_traslado) * Number(formData.num_traslados)
+                paciente_id: pacienteSeleccionado.id,
+                fecha_solicitud: formData.fecha_solicitud,
+                fecha_cita: formData.fecha_cita,
+                hora_cita: formData.hora_cita,
+                direccion_origen: formData.direccion_origen,
+                direccion_destino: formData.direccion_destino,
+                prestador_id: selectedPrestador,
+                ruta_id: selectedRuta,
+                municipio_origen: rutaSeleccionada.origen,
+                municipio_destino: rutaSeleccionada.destino,
+                num_pasajeros: parseInt(formData.num_pasajeros) || 1,
+                num_traslados: parseInt(formData.num_traslados) || 1,
+                tipo_traslado: 'MUNICIPAL', // Asegúrate de que esto coincida con los valores permitidos en tu modelo
+                tipo_transporte: formData.tipo_transporte || 'URBANO',
+                valor_traslado: parseFloat(tarifa) || 0,
+                valor_total: parseFloat(tarifa) * parseInt(formData.num_traslados)
             };
-
-            console.log('Datos enviados:', dataToSend);
-
-            await axiosInstance.post('/traslados', dataToSend);
-            onSuccess('Traslado creado exitosamente');
-            // Resetear formulario
-            setFormData({
-                paciente_id: '',
-                documento_paciente: '',
-                fecha_solicitud: '',
-                fecha_cita: '',
-                hora_cita: '',
-                requiere_acompanante: false,
-                acompanante_tipo_doc: '',
-                acompanante_documento: '',
-                acompanante_nombres: '',
-                direccion_origen: '',
-                municipio_origen: '',
-                direccion_destino: '',
-                municipio_destino: '',
-                num_pasajeros: 1,
-                num_traslados: 1,
-                tipo_transporte: '',
-                valor_traslado: '',
-                observaciones: ''
-            });
-            setPacienteSeleccionado(null);
-            onSuccess();
+    
+            console.log('Datos a enviar:', dataToSend);
+    
+            const response = await axiosInstance.post('/traslados', dataToSend);
+    
+            if (response.data.success) {
+                onSuccess('Traslado creado exitosamente');
+                // Resetear formulario...
+            }
         } catch (err) {
             console.error('Error al crear traslado:', err);
             setError(err.response?.data?.message || 'Error al crear el traslado');
@@ -191,38 +264,43 @@ function TrasladoForm({ onSuccess, setError }) {
                     {pacienteSeleccionado ? (
                         <>
                             {/* Fechas */}
-                            <Box sx={{ display: 'flex', gap: 2 }}>
-                                <TextField
-                                    fullWidth
-                                    type="date"
-                                    name="fecha_solicitud"
-                                    label="Fecha de Solicitud"
-                                    value={formData.fecha_solicitud}
-                                    onChange={handleChange}
-                                    InputLabelProps={{ shrink: true }}
-                                    required
-                                />
-                                <TextField
-                                    fullWidth
-                                    type="date"
-                                    name="fecha_cita"
-                                    label="Fecha de Cita"
-                                    value={formData.fecha_cita}
-                                    onChange={handleChange}
-                                    InputLabelProps={{ shrink: true }}
-                                    required
-                                />
-                                <TextField
-                                    fullWidth
-                                    type="time"
-                                    name="hora_cita"
-                                    label="Hora de Cita"
-                                    value={formData.hora_cita}
-                                    onChange={handleChange}
-                                    InputLabelProps={{ shrink: true }}
-                                    required
-                                />
-                            </Box>
+                        <Box sx={{ display: 'flex', gap: 2 }}>
+                            <TextField
+                                required
+                                fullWidth
+                                type="date"
+                                name="fecha_solicitud"
+                                label="Fecha de Solicitud"
+                                value={formData.fecha_solicitud}
+                                onChange={handleChange}
+                                InputLabelProps={{ shrink: true }}
+                                error={!formData.fecha_solicitud}
+                                helperText={!formData.fecha_solicitud ? "Este campo es requerido" : ""}
+                            />
+
+                            <TextField
+                                required
+                                fullWidth
+                                type="date"
+                                name="fecha_cita"
+                                label="Fecha de Cita"
+                                value={formData.fecha_cita}
+                                onChange={handleChange}
+                                InputLabelProps={{ shrink: true }}
+                                error={!formData.fecha_cita}
+                                helperText={!formData.fecha_cita ? "Este campo es requerido" : ""}
+                            />
+                            <TextField
+                                fullWidth
+                                type="time"
+                                name="hora_cita"
+                                label="Hora de Cita"
+                                value={formData.hora_cita}
+                                onChange={handleChange}
+                                InputLabelProps={{ shrink: true }}
+                                required
+                            />
+                        </Box>
     
                             {/* Acompañante Switch */}
                             <FormControlLabel
@@ -283,14 +361,7 @@ function TrasladoForm({ onSuccess, setError }) {
                                     required
                                 />
     
-                                <TextField
-                                    fullWidth
-                                    name="municipio_origen"
-                                    label="Municipio Origen"
-                                    value={formData.municipio_origen}
-                                    onChange={handleChange}
-                                    required
-                                />
+                            
                             </Box>
     
                             <Box sx={{ display: 'flex', gap: 2 }}>
@@ -303,16 +374,41 @@ function TrasladoForm({ onSuccess, setError }) {
                                     required
                                 />
     
-                                <TextField
-                                    fullWidth
-                                    name="municipio_destino"
-                                    label="Municipio Destino"
-                                    value={formData.municipio_destino}
-                                    onChange={handleChange}
-                                    required
-                                />
+                                
+                                    
+                                
                             </Box>
-    
+                            <FormControl fullWidth required>
+                                <InputLabel>Prestador</InputLabel>
+                                <Select
+                                    value={selectedPrestador || ''}
+                                    onChange={(e) => setSelectedPrestador(e.target.value)}
+                                    label="Prestador"
+                                >
+                                    <MenuItem value="">Seleccione un prestador</MenuItem> {/* Opción vacía */}
+                                    {prestadores.map((prestador) => (
+                                        <MenuItem key={prestador.id} value={prestador.nit}>
+                                            {prestador.nombre}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
+
+                            <FormControl fullWidth required>
+                                <InputLabel>Ruta</InputLabel>
+                                <Select
+                                    value={selectedRuta || ''}
+                                    onChange={(e) => setSelectedRuta(e.target.value)}
+                                    label="Ruta"
+                                >
+                                    <MenuItem value="">Seleccione una ruta</MenuItem> {/* Opción vacía */}
+                                    {rutas.map((ruta) => (
+                                        <MenuItem key={ruta.id} value={ruta.id}>
+                                            {ruta.origen} - {ruta.destino}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
                             {/* Valores y cantidades */}
                             <Box sx={{ display: 'flex', gap: 2 }}>
                                 <TextField
@@ -337,30 +433,124 @@ function TrasladoForm({ onSuccess, setError }) {
                                     InputProps={{ inputProps: { min: 1 } }}
                                 />
     
-                                <TextField
+                                    <TextField
                                     fullWidth
-                                    type="number"
-                                    name="valor_traslado"
-                                    label="Valor por Traslado"
-                                    value={formData.valor_traslado}
-                                    onChange={handleChange}
-                                    required
-                                    InputProps={{ inputProps: { min: 0 } }}
+                                    label="Tarifa"
+                                    value={tarifa}
+                                    InputProps={{ readOnly: true }}
+                                    disabled
                                 />
                             </Box>
                             <FormControl fullWidth required>
-                                <InputLabel>Tipo de Transporte</InputLabel>
-                                <Select
-                                    name="tipo_transporte"
-                                    value={formData.tipo_transporte}
-                                    onChange={handleChange}
-                                    required
-                                >
-                                    <MenuItem value="URBANO">Urbano</MenuItem>
-                                    <MenuItem value="RURAL">Rural</MenuItem>
-                                    <MenuItem value="OTRO">Otro</MenuItem>
-                                </Select>
-                            </FormControl>
+                    <InputLabel>Tipo de Atención</InputLabel>
+                    <Select
+                        name="tipo_atencion"
+                        value={formData.tipo_atencion}
+                        onChange={handleChange}
+                    >
+                        <MenuItem value="CONSULTA">Consulta</MenuItem>
+                        <MenuItem value="EXAMEN">Examen</MenuItem>
+                        <MenuItem value="TERAPIA">Terapia</MenuItem>
+                        <MenuItem value="CONTROL">Control</MenuItem>
+                    </Select>
+                </FormControl>
+
+                {/* Tipo de Traslado */}
+                <FormControl fullWidth required>
+                    <InputLabel>Tipo de Traslado</InputLabel>
+                    <Select
+                        name="tipo_traslado"
+                        value={formData.tipo_traslado}
+                        onChange={handleChange}
+                    >
+                        <MenuItem value="MUNICIPAL">Municipal</MenuItem>
+                        <MenuItem value="TICKET">Ticket</MenuItem>
+                    </Select>
+                </FormControl>
+
+                {/* Prioridad */}
+                <FormControl fullWidth>
+                    <InputLabel>Prioridad</InputLabel>
+                    <Select
+                        name="prioridad"
+                        value={formData.prioridad}
+                        onChange={handleChange}
+                    >
+                        <MenuItem value="ALTA">Alta</MenuItem>
+                        <MenuItem value="MEDIA">Media</MenuItem>
+                        <MenuItem value="BAJA">Baja</MenuItem>
+                    </Select>
+                </FormControl>
+
+                {/* Transporte Urbano */}
+                <FormControlLabel
+                    control={
+                        <Switch
+                            checked={formData.requiere_urbano}
+                            onChange={handleChange}
+                            name="requiere_urbano"
+                        />
+                    }
+                    label="Requiere Transporte Urbano"
+                />
+
+                {formData.requiere_urbano && (
+                    <Box sx={{ display: 'flex', gap: 2 }}>
+                        <TextField
+                            fullWidth
+                            type="number"
+                            name="num_traslados_urbano"
+                            label="Número de Traslados Urbanos"
+                            value={formData.num_traslados_urbano}
+                            onChange={handleChange}
+                            InputProps={{ inputProps: { min: 0 } }}
+                        />
+                        <TextField
+                            fullWidth
+                            type="number"
+                            name="valor_urbano"
+                            label="Valor Traslado Urbano"
+                            value={formData.valor_urbano}
+                            onChange={handleChange}
+                            InputProps={{ inputProps: { min: 0 } }}
+                        />
+                    </Box>
+                )}
+
+                {/* Observaciones */}
+                <TextField
+                    fullWidth
+                    multiline
+                    rows={4}
+                    name="observaciones"
+                    label="Observaciones"
+                    value={formData.observaciones}
+                    onChange={handleChange}
+                    placeholder="Ingrese cualquier observación relevante"
+                />
+                
+                {/* Mostrar Resumen de Costos */}
+                <Paper sx={{ p: 2, mt: 2, bgcolor: 'grey.50' }}>
+                    <Typography variant="h6" gutterBottom>
+                        Resumen de Costos
+                    </Typography>
+                    <Stack spacing={1}>
+                        <Typography>
+                            Traslado Principal: {formatearMoneda(formData.valor_traslado * formData.num_traslados)}
+                        </Typography>
+                        {formData.requiere_urbano && (
+                            <Typography>
+                                Traslado Urbano: {formatearMoneda(formData.valor_urbano * formData.num_traslados_urbano)}
+                            </Typography>
+                        )}
+                        <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
+                            Total: {formatearMoneda(
+                                (formData.valor_traslado * formData.num_traslados) +
+                                (formData.requiere_urbano ? formData.valor_urbano * formData.num_traslados_urbano : 0)
+                            )}
+                        </Typography>
+                    </Stack>
+                </Paper>
                             <Button
                                 type="submit"
                                 variant="contained"
@@ -388,5 +578,12 @@ function TrasladoForm({ onSuccess, setError }) {
         </Paper>
     );
 }
-
+// Función auxiliar para formatear moneda
+const formatearMoneda = (valor) => {
+    return new Intl.NumberFormat('es-CO', {
+        style: 'currency',
+        currency: 'COP',
+        minimumFractionDigits: 0
+    }).format(valor || 0);
+};
 export default TrasladoForm;

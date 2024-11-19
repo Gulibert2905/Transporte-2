@@ -3,17 +3,29 @@ const router = express.Router();
 const { authenticateToken, authorize } = require('../middleware/auth');
 const viajeController = require('../controllers/viajeController');
 
-// Proteger todas las rutas
-router.use(authenticateToken);
+// Remover el router.use(authenticateToken) y /viajes del path
+router.get('/',
+    authenticateToken,
+    authorize('admin', 'contador'),
+    viajeController.getAllViajes
+);
 
-// Rutas de lectura - acceso general autenticado
-router.get('/', viajeController.getAllViajes);
+router.post('/', 
+    authenticateToken,
+    authorize('operador', 'admin'), 
+    viajeController.createViaje
+);
 
-// Creación - solo operador y admin
-router.post('/', authorize('operador', 'admin'), viajeController.createViaje);
+router.get('/export/csv', 
+    authenticateToken,
+    authorize('contador', 'admin'), 
+    viajeController.exportCSV
+);
 
-// Exportación - solo contador y admin
-router.get('/export/csv', authorize('contador', 'admin'), viajeController.exportCSV);
-router.get('/export/excel', authorize('contador', 'admin'), viajeController.exportExcel);
+router.get('/export/excel', 
+    authenticateToken,
+    authorize('contador', 'admin'), 
+    viajeController.exportExcel
+);
 
 module.exports = router;

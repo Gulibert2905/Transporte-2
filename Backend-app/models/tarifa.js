@@ -7,6 +7,8 @@ module.exports = (sequelize, DataTypes) => {
       // define associations here
       Tarifa.belongsTo(models.Prestador, { foreignKey: 'prestador_nit', as: 'Prestador' });
       Tarifa.belongsTo(models.Ruta, { foreignKey: 'ruta_id', as: 'Ruta' });
+     // Tarifa.belongsTo(Ruta, { foreignKey: 'ruta_id' });
+      //Tarifa.belongsTo(Prestador, { foreignKey: 'prestador_id' });
     }
   }
   

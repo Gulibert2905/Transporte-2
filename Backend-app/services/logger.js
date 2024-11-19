@@ -26,6 +26,9 @@ const logFormat = winston.format.combine(
 // Crear el logger
 const logger = winston.createLogger({
     level: process.env.LOG_LEVEL || 'info',
+    info: (message) => console.log(message),
+    warn: (message) => console.warn(message),
+    error: (message, error) => console.error(message, error),
     format: logFormat,
     defaultMeta: { 
         service: 'cemedic-api',

@@ -1,21 +1,32 @@
 const { Ruta } = require('../models');
 const xlsx = require('xlsx');
+const db = require('../models'); // Importa todos los modelos
+const Tarifa = db.Tarifa;
 
 exports.getAllRutas = async (req, res) => {
   try {
-    const { prestador_id } = req.query; // Nuevo parámetro opcional
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const offset = (page - 1) * limit;
 
-    const whereCondition = prestador_id ? { prestador_id } : {};
-
-    const { count, rows: rutas } = await Ruta.findAndCountAll({
-      where: whereCondition, // Filtro opcional por prestador
+    let options = {
       limit,
       offset,
       order: [['id', 'ASC']]
-    });
+    };
+
+    // Si hay prestador_id, agregar el filtro de tarifas
+    if (req.query.prestador_id) {
+      options.include = [{
+        model: Tarifa,
+        as: 'Tarifas',
+        where: { prestador_nit: req.query.prestador_id },
+        attributes: []
+      }];
+    }
+
+    // Realizar la consulta con paginación
+    const { count, rows: rutas } = await Ruta.findAndCountAll(options);
 
     res.json({
       rutas,
@@ -23,16 +34,25 @@ exports.getAllRutas = async (req, res) => {
       totalPages: Math.ceil(count / limit),
       totalItems: count
     });
+
   } catch (error) {
     console.error('Error al obtener rutas:', error);
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ 
+      message: 'Error al obtener rutas',
+      error: error.message 
+    });
   }
 };
 
+// Asegúrate de que el modelo Ruta tenga la asociación correcta
 exports.createRuta = async (req, res) => {
   try {
     const { origen, destino, distancia } = req.body;
-    const newRuta = await Ruta.create({ origen, destino, distancia });
+    const newRuta = await Ruta.create({ 
+      origen, 
+      destino, 
+      distancia 
+    });
     res.status(201).json(newRuta);
   } catch (error) {
     console.error('Error al crear ruta:', error);
@@ -138,5 +158,30 @@ exports.importFromExcel = async (req, res) => {
       message: 'Error al importar rutas',
       error: error.message
     });
+  }
+};
+
+// Endpoint para obtener rutas disponibles para un prestador
+exports.getRutasPorPrestador = async (req, res) => {
+  try {
+      const prestador_id = req.query.prestador_id;
+
+      if (!prestador_id) {
+          return res.status(400).json({ message: 'prestador_id es requerido' });
+      }
+
+      const rutas = await Ruta.findAll({
+          include: [{
+              model: Tarifa,
+              where: { prestador_id }, // Filtra rutas por el prestador usando tarifas
+              attributes: [] // No se necesita ningún campo de `tarifas`
+          }],
+          order: [['id', 'ASC']]
+      });
+
+      res.json({ rutas });
+  } catch (error) {
+      console.error('Error al obtener rutas:', error);
+      res.status(500).json({ message: 'Error al obtener rutas' });
   }
 };

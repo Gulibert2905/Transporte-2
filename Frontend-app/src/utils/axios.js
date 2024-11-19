@@ -6,7 +6,8 @@ const axiosInstance = axios.create({
     headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json'
-    }
+    },
+    withCredentials: true // Agregar esta línea para CORS
 });
 
 // Interceptor de peticiones
@@ -17,6 +18,7 @@ axiosInstance.interceptors.request.use(
         // Debug logs
         console.log('Token en interceptor:', token);
         console.log('URL de la petición:', config.url);
+        console.log('Método:', config.method);
         
         // Asegurarnos de que headers existe
         config.headers = config.headers || {};
@@ -25,8 +27,11 @@ axiosInstance.interceptors.request.use(
             config.headers.Authorization = `Bearer ${token}`;
         }
         
+        // Manejar FormData y métodos PATCH
         if (config.data instanceof FormData) {
             delete config.headers['Content-Type'];
+        } else if (config.method === 'patch') {
+            config.headers['Content-Type'] = 'application/json';
         }
 
         return config;
@@ -36,6 +41,7 @@ axiosInstance.interceptors.request.use(
         return Promise.reject(error);
     }
 );
+
 // Interceptor de respuestas
 axiosInstance.interceptors.response.use(
     (response) => {
@@ -69,6 +75,8 @@ axiosInstance.interceptors.response.use(
                 default:
                     console.error('Error de respuesta:', error.response.data);
             }
+        } else if (error.request) {
+            console.error('Error de red:', error.message);
         }
         return Promise.reject(error);
     }
@@ -103,6 +111,15 @@ export const api = {
         }
     },
     
+    patch: async (url, data = {}, config = {}) => {
+        try {
+            const response = await axiosInstance.patch(url, data, config);
+            return response.data;
+        } catch (error) {
+            throw error;
+        }
+    },
+    
     delete: async (url, config = {}) => {
         try {
             const response = await axiosInstance.delete(url, config);
@@ -112,5 +129,18 @@ export const api = {
         }
     }
 };
+
+// Método de reintento para peticiones fallidas
+const retryRequest = async (failedRequest, retries = 1) => {
+    try {
+        return await axiosInstance(failedRequest.config);
+    } catch (error) {
+        if (retries === 0) throw error;
+        return retryRequest(failedRequest, retries - 1);
+    }
+};
+
+// Agregar método de reintento al axiosInstance
+axiosInstance.retry = retryRequest;
 
 export default axiosInstance;

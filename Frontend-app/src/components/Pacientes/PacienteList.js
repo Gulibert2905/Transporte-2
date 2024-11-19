@@ -12,6 +12,7 @@ import {
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
+import axiosInstance from '../../utils/axios';
 
 function PacienteList({ pacientes, onUpdate, setError, setSuccess }) {
   // Verifica que pacientes sea un array

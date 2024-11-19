@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const cuentaController = require('../controllers/cuentaController');
 
+
 router.post('/', cuentaController.crearCuenta);
 router.get('/', cuentaController.obtenerCuentas);
 router.get('/:id', cuentaController.obtenerCuentaPorId);
