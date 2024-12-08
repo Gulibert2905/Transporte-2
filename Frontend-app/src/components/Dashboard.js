@@ -1,14 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import axiosInstance, { api } from '../axios';
+import axiosInstance from '../utils/axios'; // Asegúrate de que la ruta sea correcta
 import { 
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   BarChart, Bar, PieChart, Pie, Cell
 } from 'recharts';
 import { Grid, Paper, Typography, Box, CircularProgress, Alert } from '@mui/material';
-import './Dashboard.css';
-
 
 function Dashboard() {
+  // Definir el estado
   const [stats, setStats] = useState({
     totalViajes: 0,
     promedioTarifa: 0,
@@ -19,27 +18,41 @@ function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Colores para el gráfico pie
+  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
+
   useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        setLoading(true);
+        const response = await axiosInstance.get('/dashboard');
+        setStats(response.data);
+      } catch (err) {
+        console.error('Error fetching dashboard data:', err);
+        setError('Error al cargar los datos del dashboard');
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchDashboardData();
   }, []);
 
-  const fetchDashboardData = async () => {
-    try {
-      setLoading(true);
-      const response = await axios.get('http://localhost:3000/api/dashboard');
-      setStats(response.data);
-      setLoading(false);
-    } catch (err) {
-      setError('Error al cargar los datos del dashboard');
-      setLoading(false);
-      console.error('Error fetching dashboard data:', err);
-    }
-  };
+  if (loading) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
+        <CircularProgress />
+      </Box>
+    );
+  }
 
-  if (loading) return <Box display="flex" justifyContent="center" alignItems="center" height="100vh"><CircularProgress /></Box>;
-  if (error) return <Box m={3}><Alert severity="error">{error}</Alert></Box>;
-
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
+  if (error) {
+    return (
+      <Box m={3}>
+        <Alert severity="error">{error}</Alert>
+      </Box>
+    );
+  }
 
   return (
     <Box p={3}>
@@ -58,7 +71,9 @@ function Dashboard() {
         <Grid item xs={12} md={6}>
           <Paper elevation={3} sx={{ padding: 2 }}>
             <Typography variant="h6">Tarifa Promedio</Typography>
-            <Typography variant="h4">${stats.promedioTarifa.toFixed(2)}</Typography>
+            <Typography variant="h4">
+              ${stats.promedioTarifa ? stats.promedioTarifa.toFixed(2) : '0.00'}
+            </Typography>
           </Paper>
         </Grid>
       </Grid>
@@ -100,25 +115,25 @@ function Dashboard() {
         <Grid item xs={12}>
           <Paper elevation={3} sx={{ padding: 2 }}>
             <Typography variant="h6">Distribución de Viajes por Ruta</Typography>
-            <PieChart width={400} height={400}>
-              <Pie
-                data={stats.viajesPorRuta}
-                cx={200}
-                cy={200}
-                labelLine={false}
-                outerRadius={80}
-                fill="#8884d8"
-                dataKey="viajes"
-              >
-                {
-                  stats.viajesPorRuta.map((entry, index) => (
+            <Box display="flex" justifyContent="center">
+              <PieChart width={400} height={400}>
+                <Pie
+                  data={stats.viajesPorRuta}
+                  cx={200}
+                  cy={200}
+                  labelLine={false}
+                  outerRadius={80}
+                  fill="#8884d8"
+                  dataKey="viajes"
+                >
+                  {stats.viajesPorRuta.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))
-                }
-              </Pie>
-              <Tooltip />
-              <Legend />
-            </PieChart>
+                  ))}
+                </Pie>
+                <Tooltip />
+                <Legend />
+              </PieChart>
+            </Box>
           </Paper>
         </Grid>
       </Grid>

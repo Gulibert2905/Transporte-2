@@ -18,34 +18,41 @@ import Pacientes from './components/Pacientes/Pacientes';
 import Traslados from './components/Traslados/Traslados';
 import VerificacionTraslados from './components/Traslados/VerificacionTraslados';
 import ReportesTraslados from './components/Traslados/ReportesTraslados';
-
+import Loading from './components/Loading';
 
 function AppRoutes() {
-    const isDevelopment = process.env.REACT_APP_ENV === 'development';
+    const { loading } = useAuth();
 
-const ProtectedRoute = ({ children, roles = [] }) => {
-    const { user } = useAuth();
-    
-    if (!user) {
-    return <Navigate to="/login" />;
+    if (loading) {
+        return <Loading />;  // Muestra un componente de carga mientras se valida el token
     }
 
-    if (roles.length && !roles.includes(user.rol)) {
-    return <Navigate to="/unauthorized" />;
-    }
+    const ProtectedRoute = ({ children, roles = [] }) => {
+        const { user } = useAuth();
+        
+        if (!user) {
+            console.log("ProtectedRoute - No hay usuario, redirigiendo a login");
+            return <Navigate to="/login" replace />;
+        }
 
-    return <DashboardLayout>{children}</DashboardLayout>;
+        if (roles.length && !roles.includes(user.rol)) {
+            console.log("ProtectedRoute - Usuario no autorizado", {
+                userRol: user.rol,
+                requiredRoles: roles
+            });
+            return <Navigate to="/unauthorized" replace />;
+        }
+
+        return <DashboardLayout>{children}</DashboardLayout>;
     };
 
+
 return (
-    <AuthProvider>
-        <Routes>
+    
+         <Routes>
             {/* Rutas públicas */}
             <Route path="/login" element={<Login />} />
             <Route path="/unauthorized" element={<Unauthorized />} />
-            {isDevelopment && (
-                <Route path="/select-user" element={<SelectUser />} />
-            )}
 
             {/* Ruta principal */}
             <Route
@@ -173,7 +180,7 @@ return (
             {/* Ruta para cualquier otra URL no definida */}
             <Route path="*" element={<Navigate to="/" />} />
         </Routes>
-    </AuthProvider>
+    
 );
 }
 

@@ -5,7 +5,7 @@ module.exports = (sequelize, DataTypes) => {
       defaultValue: DataTypes.UUIDV4,
       primaryKey: true
     },
-    
+      
     fecha: {
       type: DataTypes.DATE,
       allowNull: false
