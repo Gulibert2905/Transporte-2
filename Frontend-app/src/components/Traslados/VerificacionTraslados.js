@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback} from 'react';
 import {
   Box,
   Typography,
@@ -13,7 +13,7 @@ import {
   CardContent
 } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
-import axiosInstance, { api } from '../../utils/axios';
+import axiosInstance from '../../utils/axios';
 
 const VerificacionTraslados = () => {
   const [loading, setLoading] = useState(true);
@@ -31,12 +31,16 @@ const VerificacionTraslados = () => {
     verificadosHoy: 0
   });
 
-  useEffect(() => {
-    fetchTraslados();
-    fetchEstadisticas();
-  }, [filtros]);
+  const fetchEstadisticas = useCallback(async () => {
+    try {
+      const response = await axiosInstance.get('/traslados/verificacion/estadisticas');
+      setEstadisticas(response.data);
+    } catch (err) {
+      console.error('Error al cargar estadísticas:', err);
+    }
+  }, []);
 
-  const fetchTraslados = async () => {
+  const fetchTraslados = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -48,7 +52,6 @@ const VerificacionTraslados = () => {
         }
       });
       
-      // Asegurarse de que los datos estén en el formato correcto
       const trasladosFormateados = Array.isArray(response.data) ? response.data.map(traslado => ({
         id: traslado.id,
         fecha_cita: traslado.fecha_cita || null,
@@ -70,37 +73,35 @@ const VerificacionTraslados = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filtros]);
 
-  const fetchEstadisticas = async () => {
-    try {
-      const response = await axiosInstance.get('/traslados/verificacion/estadisticas');
-      setEstadisticas(response.data);
-    } catch (err) {
-      console.error('Error al cargar estadísticas:', err);
-    }
-  };
+  useEffect(() => {
+    const cargarDatos = async () => {
+      await fetchTraslados();
+      await fetchEstadisticas();
+    };
+    cargarDatos();
+  }, [fetchTraslados, fetchEstadisticas]);
 
   const handleVerificar = async (id) => {
     try {
-        setLoading(true);
-        setError(null);
-        
-        // Usar el nuevo método patch del api helper
-        const response = await api.patch(`/traslados/verificacion/${id}`, {
-            verificado: true
-        });
+      setLoading(true);
+      setError(null);
+      
+      await axiosInstance.patch(`/traslados/verificacion/${id}`, {
+        verificado: true
+      });
 
-        setSuccess('Traslado verificado exitosamente');
-        await fetchTraslados();
-        await fetchEstadisticas();
+      setSuccess('Traslado verificado exitosamente');
+      await fetchTraslados();
+      await fetchEstadisticas();
     } catch (err) {
-        console.error('Error:', err);
-        setError(err.response?.data?.message || 'Error al verificar el traslado');
+      console.error('Error:', err);
+      setError(err.response?.data?.message || 'Error al verificar el traslado');
     } finally {
-        setLoading(false);
+      setLoading(false);
     }
-};
+  };
 
   const handleFiltroChange = (event) => {
     setFiltros({

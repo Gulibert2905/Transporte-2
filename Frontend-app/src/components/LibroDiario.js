@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import axiosInstance from '../utils/axios'; 
 import { 
   Container, 
   Typography, 
@@ -40,7 +40,7 @@ function LibroDiario() {
 
   const cargarTransacciones = async (page) => {
     try {
-      const response = await axios.get(`/api/transacciones?page=${page}&limit=10`);
+      const response = await axiosInstance.get(`/api/transacciones?page=${page}&limit=10`);
       setTransacciones(response.data.transacciones);
       setTotalPages(response.data.totalPages);
     } catch (error) {
@@ -50,7 +50,7 @@ function LibroDiario() {
 
   const cargarCuentas = async () => {
     try {
-      const response = await axios.get('/api/cuenta');
+      const response = await axiosInstance.get('/api/cuenta');
       setCuentas(response.data);
     } catch (error) {
       console.error('Error al cargar cuentas:', error);
@@ -75,7 +75,7 @@ function LibroDiario() {
       return;
     }
     try {
-      await axios.post('/api/transacciones', nuevaTransaccion);
+      await axiosInstance.post('/api/transacciones', nuevaTransaccion);
       cargarTransacciones(currentPage);
       setNuevaTransaccion({
         fecha: '',

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import axiosInstance from '../utils/axios'; 
 import { 
   Container, Typography, TextField, Button, Table, TableBody, 
   TableCell, TableContainer, TableHead, TableRow, Paper, Grid, 
@@ -22,7 +22,7 @@ function NotaDebitoCredito() {
   }, []);
 
   const fetchNotas = async () => {
-    const res = await axios.get('/api/notas-debito-credito');
+    const res = await axiosInstance.get('/api/notas-debito-credito');
     setNotas(res.data);
   };
 
@@ -32,7 +32,7 @@ function NotaDebitoCredito() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await axios.post('/api/notas-debito-credito', nuevaNota);
+    await axiosInstance.post('/api/notas-debito-credito', nuevaNota);
     fetchNotas();
     setNuevaNota({
       numero: '',

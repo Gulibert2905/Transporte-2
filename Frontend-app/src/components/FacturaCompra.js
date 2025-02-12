@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import axiosInstance from '../utils/axios'; 
 import { 
   Container, Typography, TextField, Button, Table, TableBody, 
   TableCell, TableContainer, TableHead, TableRow, Paper, Grid, 
@@ -21,7 +21,7 @@ function FacturaCompra() {
   }, []);
 
   const fetchFacturas = async () => {
-    const res = await axios.get('/api/facturas-compra');
+    const res = await axiosInstance.get('/api/facturas-compra');
     setFacturas(res.data);
   };
 
@@ -32,7 +32,7 @@ function FacturaCompra() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     console.log(nuevaFactura)
-    await axios.post('/api/facturas-compra', nuevaFactura);
+    await axiosInstance.post('/api/facturas-compra', nuevaFactura);
     fetchFacturas();
     setNuevaFactura({
       numero: '',

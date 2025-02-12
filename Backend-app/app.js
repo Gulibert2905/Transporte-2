@@ -11,7 +11,7 @@ const helmet = require('helmet');
 const compression = require('compression');
 const { logger, requestLogger } = require('./services/logger');
 const db = require('./models');
-const { authenticateToken } = require('./middleware/auth');
+const { authenticateToken, authorize } = require('./middleware/auth');
 
 // Importar rutas
 const authRoutes = require('./routes/authRoutes');
@@ -59,7 +59,20 @@ app.use(requestLogger);
 // Rutas públicas
 app.use('/api/auth', authRoutes);
 
-// Rutas protegidas - agregar authenticateToken
+// Rutas de contabilidad - agregar authorize para contador y admin
+app.use('/api/contabilidad', authenticateToken, authorize('contador', 'admin'), contabilidadRoutes);
+app.use('/api/nominas', authenticateToken, authorize('contador', 'admin'), nominaRoutes);
+app.use('/api/comprobantes-egreso', authenticateToken, authorize('contador', 'admin'), comprobanteEgresoRoutes);
+app.use('/api/recibos-caja', authenticateToken, authorize('contador', 'admin'), reciboCajaRoutes);
+app.use('/api/facturas-compra', authenticateToken, authorize('contador', 'admin'), facturaCompraRoutes);
+app.use('/api/notas-debito-credito', authenticateToken, authorize('contador', 'admin'), notaDebitoCreditoRoutes);
+app.use('/api/notas-contabilidad', authenticateToken, authorize('contador', 'admin'), notaContabilidadRoutes);
+app.use('/api/cuenta', authenticateToken, authorize('contador', 'admin'), cuentaRoutes);
+app.use('/api/factura-venta', authenticateToken, authorize('contador', 'admin'), facturaRoutes);
+app.use('/api/impuestos', authenticateToken, authorize('contador', 'admin'), impuestosRoutes);
+app.use('/api/transacciones', authenticateToken, authorize('contador', 'admin'), transaccionesRoutes);
+
+// Rutas generales - mantener solo authenticateToken
 app.use('/api/users', authenticateToken, userRoutes);
 app.use('/api/prestadores', authenticateToken, prestadoresRoutes);
 app.use('/api/rutas', authenticateToken, rutasRoutes);
@@ -67,17 +80,6 @@ app.use('/api/tarifas', authenticateToken, tarifasRoutes);
 app.use('/api/viajes', authenticateToken, viajesRoutes);
 app.use('/api/reportes', authenticateToken, reportesRoutes);
 app.use('/api/dashboard', authenticateToken, dashboardRoutes);
-app.use('/api/contabilidad', authenticateToken, contabilidadRoutes);
-app.use('/api/nominas', authenticateToken, nominaRoutes);
-app.use('/api/comprobantes-egreso', authenticateToken, comprobanteEgresoRoutes);
-app.use('/api/recibos-caja', authenticateToken, reciboCajaRoutes);
-app.use('/api/facturas-compra', authenticateToken, facturaCompraRoutes);
-app.use('/api/notas-debito-credito', authenticateToken, notaDebitoCreditoRoutes);
-app.use('/api/notas-contabilidad', authenticateToken, notaContabilidadRoutes);
-app.use('/api/cuenta', authenticateToken, cuentaRoutes);
-app.use('/api/factura-venta', authenticateToken, facturaRoutes);
-app.use('/api/impuestos', authenticateToken, impuestosRoutes);
-app.use('/api/transacciones', authenticateToken, transaccionesRoutes);
 app.use('/api/pacientes', authenticateToken, pacienteRoutes);
 app.use('/api/traslados', authenticateToken, trasladoRoutes);
 

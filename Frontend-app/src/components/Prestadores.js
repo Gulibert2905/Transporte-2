@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import axios from 'axios';
 import { useForm } from 'react-hook-form';
 import { 
   Box, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, 
@@ -116,7 +115,7 @@ function Prestadores() {
     formData.append('file', file);
 
     try {
-      const response = await axios.post(
+      const response = await axiosInstance.post(
         `${process.env.REACT_APP_API_URL}/prestadores/import`, 
         formData, 
         {

@@ -2,13 +2,12 @@ import React, { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
-  Button,
   Paper,
   Tab,
   Tabs,
   CircularProgress,
   Alert,
-  Grid
+  
 } from '@mui/material';
 import axiosInstance from '../../utils/axios';
 import TrasladoForm from './TrasladoForm';

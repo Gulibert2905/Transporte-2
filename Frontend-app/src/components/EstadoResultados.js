@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import axiosInstance from '../utils/axios'; 
 import { Box, Typography, Button, Paper, Grid, CircularProgress, TextField } from '@mui/material';
 
 function EstadoResultados() {
@@ -16,7 +16,7 @@ function EstadoResultados() {
     const fetchResultados = async () => {
       try {
         setLoading(true);
-        const res = await axios.get(`/api/contabilidad/estado-resultados?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`);
+        const res = await axiosInstance.get(`/contabilidad/estado-resultados?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`);
         console.log('Datos recibidos:', res.data);
         setResultados(res.data);
         setLoading(false);
@@ -30,11 +30,11 @@ function EstadoResultados() {
   }, [fechaInicio, fechaFin]);
 
   const exportPDF = () => {
-    window.open(`/api/contabilidad/estado-resultados/pdf?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`, '_blank');
+    window.open(`/contabilidad/estado-resultados/pdf?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`, '_blank');
   };
 
   const exportExcel = () => {
-    window.open(`/api/contabilidad/estado-resultados/excel?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`, '_blank');
+    window.open(`contabilidad/estado-resultados/excel?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`, '_blank');
   };
 
   if (loading) {

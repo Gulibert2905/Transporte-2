@@ -2,6 +2,8 @@
 const { Traslado, Paciente, Usuario, Ruta } = require('../models');
 const { Op } = require('sequelize');
 const excel = require('exceljs');
+
+
 const formatearFecha = (fecha) => {
     if (!fecha) return '';
     try {

@@ -18,6 +18,9 @@ router.get('/',
     pacienteController.getAllPacientes
 );
 
+// routes/pacientes.js
+router.get('/plantilla', authenticateToken, pacienteController.obtenerPlantilla);
+
 router.post('/',
     authorize('admin', 'operador'), 
     pacienteController.createPaciente

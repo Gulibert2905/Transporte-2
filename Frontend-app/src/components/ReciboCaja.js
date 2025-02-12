@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import axiosInstance from '../utils/axios'; 
 import { 
   Container, Typography, TextField, Button, Table, TableBody, 
   TableCell, TableContainer, TableHead, TableRow, Paper, Grid, Snackbar
@@ -24,7 +24,7 @@ function ReciboCaja() {
 
   const fetchRecibos = async () => {
     try {
-      const res = await axios.get('/api/recibos-caja');
+      const res = await axiosInstance.get('/api/recibos-caja');
       setRecibos(res.data);
     } catch (error) {
       console.error('Error al obtener recibos:', error);
@@ -39,7 +39,7 @@ function ReciboCaja() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post('/api/recibos-caja', nuevoRecibo);
+      await axiosInstance.post('/api/recibos-caja', nuevoRecibo);
       fetchRecibos();
       setNuevoRecibo({
         numero: '',

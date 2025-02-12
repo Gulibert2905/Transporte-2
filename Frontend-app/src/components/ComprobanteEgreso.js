@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import axiosInstance from '../utils/axios'; 
 import {
   Container, Typography, TextField, Button, Table, TableBody,
   TableCell, TableContainer, TableHead, TableRow, Paper, Grid, Snackbar,
@@ -30,7 +30,7 @@ function ComprobanteEgreso() {
 
   const fetchComprobantes = async () => {
     try {
-      const res = await axios.get('/api/comprobantes-egreso');
+      const res = await axiosInstance.get('/api/comprobantes-egreso');
       setComprobantes(res.data);
     } catch (error) {
       console.error('Error al obtener comprobantes:', error);
@@ -56,7 +56,7 @@ function ComprobanteEgreso() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post('/api/comprobantes-egreso', nuevoComprobante);
+      await axiosInstance.post('/api/comprobantes-egreso', nuevoComprobante);
       fetchComprobantes();
       setNuevoComprobante({
         numero: '',

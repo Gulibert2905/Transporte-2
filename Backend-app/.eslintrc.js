@@ -14,7 +14,7 @@ module.exports = {
       sourceType: 'module',
     },
     rules: {
-      'no-console': process.env.NODE_ENV === 'production' ? 'error' : 'warn',
+      'no-console': process.env.NODE_ENV === 'production' ? 'error' : 'off',
       'no-unused-vars': ['error', { argsIgnorePattern: 'next' }],
       'prefer-const': 'error',
       'no-var': 'error',

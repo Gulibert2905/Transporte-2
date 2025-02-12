@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import axiosInstance from '../utils/axios'; 
 import {
   Container,
   Typography,
@@ -28,7 +28,7 @@ function NuevaTransaccionForm() {
 
   const cargarCuentas = async () => {
     try {
-      const response = await axios.get('/api/cuenta');
+      const response = await axiosInstance.get('/api/cuenta');
       setCuentas(response.data);
     } catch (error) {
       console.error('Error al cargar cuentas:', error);
@@ -62,7 +62,7 @@ function NuevaTransaccionForm() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post('/api/transacciones', transaccion);
+      await axiosInstance.post('/api/transacciones', transaccion);
       // Limpiar el formulario o redirigir según sea necesario
       setTransaccion({
         fecha: '',

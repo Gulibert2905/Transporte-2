@@ -1,6 +1,6 @@
 // src/components/Nomina.js
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import axiosInstance from '../utils/axios'; 
 import { 
   Container, Typography, TextField, Button, Table, TableBody, 
   TableCell, TableContainer, TableHead, TableRow, Paper, Grid 
@@ -21,7 +21,7 @@ function Nomina() {
   }, []);
 
   const fetchNominas = async () => {
-    const res = await axios.get('/api/nominas');
+    const res = await axiosInstance.get('/api/nominas');
     setNominas(res.data);
   };
 
@@ -33,7 +33,7 @@ function Nomina() {
     e.preventDefault();
     console.log(nuevaNomina);  // Para verificar el contenido
     try {
-      await axios.post('/api/nominas', nuevaNomina);
+      await axiosInstance.post('/api/nominas', nuevaNomina);
       fetchNominas();
       setNuevaNomina({
         empleado_id: '',

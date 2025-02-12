@@ -1,6 +1,10 @@
 const express = require('express');
 const router = express.Router();
+const { authenticateToken, authorize } = require('../middleware/auth');
 const cuentaController = require('../controllers/cuentaController');
+
+router.use(authenticateToken);
+router.use(authorize('contador', 'admin'));
 
 
 router.post('/', cuentaController.crearCuenta);

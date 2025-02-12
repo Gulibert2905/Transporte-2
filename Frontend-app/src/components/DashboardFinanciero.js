@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import axiosInstance from '../utils/axios'; 
 import { Container, Typography, Grid, Paper, CircularProgress } from '@mui/material';
 
 function DashboardFinanciero() {
@@ -20,8 +20,8 @@ function DashboardFinanciero() {
 
       // Realizar las peticiones
       const [balanceRes, estadoRes] = await Promise.all([
-        axios.get(`/api/contabilidad/balance-general/generar?fecha=${fechaActual}`),
-        axios.get(`/api/contabilidad/estado-resultados/generar?fechaInicio=${inicioMes}&fechaFin=${fechaActual}`)
+        axiosInstance.get(`/api/contabilidad/balance-general/generar?fecha=${fechaActual}`),
+        axiosInstance.get(`/api/contabilidad/estado-resultados/generar?fechaInicio=${inicioMes}&fechaFin=${fechaActual}`)
       ]);
 
       console.log('Balance General recibido:', balanceRes.data);

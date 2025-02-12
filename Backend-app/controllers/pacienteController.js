@@ -147,7 +147,42 @@ const pacienteController = {
                 error: error.message
             });
         }
-    }
-};
+    },
 
+
+    exportarPacientes: async (req, res) => {
+        try {
+            const pacientes = await Paciente.findAll({
+                include: [{
+                    model: Usuario,
+                    as: 'Operador',
+                    attributes: ['username']
+                }]
+            });
+            res.json(pacientes);
+        } catch (error) {
+            res.status(500).json({
+                success: false,
+                message: 'Error al exportar pacientes'
+            });
+        }
+    },
+
+    obtenerPlantilla: (req, res) => {
+        const plantilla = [{
+            tipo_documento: 'CC',
+            documento: '1234567890',
+            nombres: 'JUAN',
+            apellidos: 'PEREZ',
+            fecha_nacimiento: '1990-01-01',
+            sexo: 'M',
+            telefono: '3001234567',
+            direccion: 'CALLE 123',
+            municipio: 'VALLEDUPAR',
+            zona: 'U',
+            regimen: 'Contributivo',
+            categoria: 'FIJO'
+        }];
+        res.json(plantilla);
+    },};
 module.exports = pacienteController;

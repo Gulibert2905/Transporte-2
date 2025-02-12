@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import axiosInstance from '../utils/axios'; 
 import { Box, Typography, Paper, Grid, CircularProgress } from '@mui/material';
 
 function BalanceGeneral() {
@@ -11,7 +11,7 @@ function BalanceGeneral() {
     try {
       setLoading(true);
       const fechaActual = new Date().toISOString().split('T')[0];
-      const res = await axios.get(`/api/contabilidad/balance-general/generar?fecha=${fechaActual}`);
+      const res = await axiosInstance.get(`/contabilidad/balance-general/generar?fecha=${fechaActual}`);
       console.log('Respuesta del servidor (Balance General):', res.data);
 
       // Procesar los datos recibidos

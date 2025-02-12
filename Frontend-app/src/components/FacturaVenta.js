@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import axiosInstance from '../utils/axios'; 
 import {
   Container,
   Typography,
@@ -65,7 +65,7 @@ function FacturaVenta() {
 
   const fetchFacturas = async () => {
     try {
-      const response = await axios.get('/api/factura-venta');
+      const response = await axiosInstance.get('/api/factura-venta');
       setFacturas(response.data);
     } catch (error) {
       console.error('Error al obtener las facturas:', error);
@@ -136,7 +136,7 @@ function FacturaVenta() {
         })),
         impuestosAplicados: [] // Si no estás manejando impuestos, envía un array vacío
       };
-      await axios.post('/api/factura-venta', facturaData);
+      await axiosInstance.post('/api/factura-venta', facturaData);
       fetchFacturas();
       setNuevaFactura({
         numero: '',

@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
-  Button,
   Paper,
   Tab,
   Tabs,
@@ -12,6 +11,7 @@ import {
 import axiosInstance from '../../utils/axios';
 import PacienteForm from './PacienteForm';
 import PacienteList from './PacienteList';
+import PacienteExcel from './PacienteExcel';
 
 function PacientesPage() {
   const [activeTab, setActiveTab] = useState(0);
@@ -65,6 +65,7 @@ function PacientesPage() {
         <Tabs value={activeTab} onChange={handleTabChange}>
           <Tab label="Lista de Pacientes" />
           <Tab label="Registrar Paciente" />
+          <Tab label="Importar/Exportar" /> 
         </Tabs>
       </Paper>
 
@@ -86,6 +87,13 @@ function PacientesPage() {
           }}
           setError={setError}
         />
+      )}
+
+      {activeTab === 2 && (
+      <PacienteExcel 
+        onSuccess={(msg) => setSuccess(msg)}
+        setError={setError}
+      />
       )}
     </Box>
   );
