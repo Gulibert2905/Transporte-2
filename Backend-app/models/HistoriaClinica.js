@@ -107,7 +107,8 @@ module.exports = (sequelize, DataTypes) => {
 
     HistoriaClinica.associate = (models) => {
         HistoriaClinica.belongsTo(models.Traslado, {
-            foreignKey: 'traslado_id'
+            foreignKey: 'traslado_id',
+            as: 'Traslado' 
         });
         HistoriaClinica.belongsTo(models.Usuario, {
             foreignKey: 'medico_id',

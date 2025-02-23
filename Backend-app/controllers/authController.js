@@ -43,6 +43,24 @@ const authController = {
         }
     },
 
+    logout: async (req, res) => {
+        try {
+            // Aunque no hay mucho que hacer en el servidor para el logout
+            // ya que el token es stateless, es buena práctica tener este endpoint
+            logger.info(`Usuario ${req.user?.username} cerró sesión`);
+            res.json({
+                success: true,
+                message: 'Sesión cerrada exitosamente'
+            });
+        } catch (error) {
+            logger.error('Error en logout:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Error al cerrar sesión'
+            });
+        }
+    },
+
     // Obtener todos los usuarios
     getAllUsers: async (req, res) => {
         try {
@@ -102,6 +120,29 @@ const authController = {
         }
     },
 
+    getPersonalMedico: async (req, res) => {
+        try {
+            const personalMedico = await Usuario.findAll({
+                where: {
+                    rol: ['medico', 'enfermero'],
+                    estado: 'activo'
+                },
+                attributes: ['id', 'username', 'nombre_completo', 'rol']
+            });
+    
+            res.json({
+                success: true,
+                data: personalMedico
+            });
+        } catch (error) {
+            logger.error('Error al obtener personal médico:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Error al obtener el personal médico'
+            });
+        }
+    },
+    
     // Actualizar usuario
     updateUser: async (req, res) => {
         try {

@@ -21,6 +21,11 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.TIME,
             allowNull: true
         },
+        tipo_servicio: {
+            type: DataTypes.ENUM('AMBULANCIA', 'BASICO', 'ESPECIAL'),
+            allowNull: false,
+            defaultValue: 'BASICO'
+        },
         requiere_acompanante: {
             type: DataTypes.BOOLEAN,
             defaultValue: false
@@ -88,6 +93,10 @@ module.exports = (sequelize, DataTypes) => {
         Traslado.belongsTo(models.Paciente, {
             foreignKey: 'paciente_id',
             as: 'Paciente'
+        });
+        Traslado.hasOne(models.HistoriaClinica, {
+            foreignKey: 'traslado_id',
+            as: 'HistoriaClinica'
         });
         Traslado.belongsTo(models.Prestador, {
             foreignKey: 'prestador_id',

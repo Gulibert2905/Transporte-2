@@ -36,7 +36,7 @@ function TrasladoForm({ onSuccess, setError }) {
         tipo_atencion: '', // Nuevo campo
         tipo_traslado: '', // MUNICIPAL o TICKET
         prioridad: 'MEDIA', // ALTA, MEDIA, BAJA
-        
+        tipo_servicio: '',
         // Acompañante
         requiere_acompanante: false,
         acompanante_tipo_doc: '',
@@ -175,6 +175,7 @@ function TrasladoForm({ onSuccess, setError }) {
                 num_traslados: parseInt(formData.num_traslados) || 1,
                 tipo_traslado: 'MUNICIPAL', // Asegúrate de que esto coincida con los valores permitidos en tu modelo
                 tipo_transporte: formData.tipo_transporte || 'URBANO',
+                tipo_servicio: formData.tipo_servicio,
                 valor_traslado: parseFloat(tarifa) || 0,
                 valor_total: parseFloat(tarifa) * parseInt(formData.num_traslados)
             };
@@ -448,10 +449,10 @@ function TrasladoForm({ onSuccess, setError }) {
                         value={formData.tipo_atencion}
                         onChange={handleChange}
                     >
-                        <MenuItem value="CONSULTA">Consulta</MenuItem>
-                        <MenuItem value="EXAMEN">Examen</MenuItem>
-                        <MenuItem value="TERAPIA">Terapia</MenuItem>
-                        <MenuItem value="CONTROL">Control</MenuItem>
+                        <MenuItem key="consulta" value="CONSULTA">Consulta</MenuItem>
+                        <MenuItem key="examen" value="EXAMEN">Examen</MenuItem>
+                        <MenuItem key="terapia" value="TERAPIA">Terapia</MenuItem>
+                        <MenuItem key="control" value="CONTROL">Control</MenuItem>
                     </Select>
                 </FormControl>
 
@@ -465,6 +466,19 @@ function TrasladoForm({ onSuccess, setError }) {
                     >
                         <MenuItem value="MUNICIPAL">Municipal</MenuItem>
                         <MenuItem value="TICKET">Ticket</MenuItem>
+                    </Select>
+                </FormControl>
+
+                <FormControl fullWidth required>
+                    <InputLabel>Tipo de Servicio</InputLabel>
+                    <Select
+                        name="tipo_servicio"
+                        value={formData.tipo_servicio}
+                        onChange={handleChange}
+                    >
+                        <MenuItem key="basico" value="BASICO">Básico</MenuItem>
+                        <MenuItem key="ambulancia" value="AMBULANCIA">Ambulancia</MenuItem>
+                        <MenuItem key="especial" value="ESPECIAL">Especial</MenuItem>
                     </Select>
                 </FormControl>
 

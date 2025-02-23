@@ -1,10 +1,9 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { useAuth } from './contexts/AuthContext';
 import DashboardLayout from './components/DashboardLayout';
 import Login from './components/Login';
 import Unauthorized from './components/Unauthorized';
-import SelectUser from './components/SelectUser';
 import Home from './pages/Home';
 import Dashboard from './components/Dashboard';
 import DashboardFinanciero from './components/DashboardFinanciero';
@@ -19,12 +18,23 @@ import Traslados from './components/Traslados/Traslados';
 import VerificacionTraslados from './components/Traslados/VerificacionTraslados';
 import ReportesTraslados from './components/Traslados/ReportesTraslados';
 import Loading from './components/Loading';
+import RegistroHistoriaClinica from './components/HistoriaClinica/RegistroHistoriaClinica';
+import ListadoHistoriasClinicas from './components/HistoriaClinica/ListadoHistoriasClinicas';
+import DetalleHistoriaClinica from './components/HistoriaClinica/DetalleHistoriaClinica';
+import DashboardMedico from './components/Medico/DashboardMedico';
+import PacientesMedico from './components/Medico/PacientesMedico';
+import ConsultasMedicas from './components/Medico/ConsultasMedicas';
+import DashboardEnfermeria from './components/Enfermeria/DashboardEnfermeria';
+import PacientesEnfermeria from './components/Enfermeria/PacientesEnfermeria';
+import SignosVitales from './components/Enfermeria/SignosVitales';
+import NotasEnfermeria from './components/Enfermeria/NotasEnfermeria';
+import HistoriasClinicas from './components/HistoriaClinica/HistoriasClinicas';
 
 function AppRoutes() {
     const { loading } = useAuth();
 
     if (loading) {
-        return <Loading />;  // Muestra un componente de carga mientras se valida el token
+        return <Loading />;
     }
 
     const ProtectedRoute = ({ children, roles = [] }) => {
@@ -47,9 +57,10 @@ function AppRoutes() {
     };
 
 
+
 return (
     
-         <Routes>
+        <Routes>
             {/* Rutas públicas */}
             <Route path="/login" element={<Login />} />
             <Route path="/unauthorized" element={<Unauthorized />} />
@@ -58,21 +69,22 @@ return (
             <Route
                 path="/"
                 element={
-                    <ProtectedRoute>
+                    <ProtectedRoute roles={['admin', 'medico', 'enfermero', 'contador']}>
                         <Home />
                     </ProtectedRoute>
                 }
             />
 
             {/* Dashboard general */}
-            <Route
-                path="/dashboard"
-                element={
-                    <ProtectedRoute>
-                        <Dashboard />
-                    </ProtectedRoute>
-                }
-            />
+            {/* Dashboard general - solo para admin y contador */}
+                <Route
+                    path="/dashboard"
+                    element={
+                        <ProtectedRoute roles={['admin', 'contador']}>
+                            <Dashboard />
+                        </ProtectedRoute>
+                    }
+                />
                 {/* Nuevas rutas para el módulo de pacientes */}
                 <Route
                     path="/pacientes"
@@ -176,7 +188,117 @@ return (
                     </ProtectedRoute>
                 }
             />
+            {/* Rutas de Historia Clínica */}
+            <Route path="/historia-clinica">
+            <Route
+        path="crear/:trasladoId"
+        element={
+            <ProtectedRoute roles={['admin', 'medico', 'enfermero']}>
+                <RegistroHistoriaClinica />
+            </ProtectedRoute>
+        }
+    />
+    
+    {/* Listado de historias */}
+    <Route
+        path="listado"
+        element={
+            <ProtectedRoute roles={['admin', 'medico', 'enfermero', 'auditor']}>
+                <ListadoHistoriasClinicas />
+            </ProtectedRoute>
+        }
+    />
 
+    {/* Ver detalle */}
+    <Route
+        path=":id"
+        element={
+            <ProtectedRoute roles={['admin', 'medico', 'enfermero', 'auditor']}>
+                <DetalleHistoriaClinica />
+            </ProtectedRoute>
+        }
+    />
+    </Route>
+    {/* Editar historia */}
+    <Route
+        path=":id/editar"
+        element={
+            <ProtectedRoute roles={['admin', 'medico', 'enfermero']}>
+                <RegistroHistoriaClinica modo="edicion" />
+            </ProtectedRoute>
+        }
+    />
+
+            {/* Rutas para médicos */}
+            <Route
+                path="/medico/dashboard"
+                element={
+                    <ProtectedRoute roles={['medico']}>
+                        <DashboardMedico />
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/medico/pacientes"
+                element={
+                    <ProtectedRoute roles={['medico']}>
+                        <PacientesMedico />
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/medico/consultas"
+                element={
+                    <ProtectedRoute roles={['medico']}>
+                        <ConsultasMedicas />
+                    </ProtectedRoute>
+                }
+            />
+
+            {/* Rutas para enfermeros */}
+            <Route
+                path="/enfermeria/dashboard"
+                element={
+                    <ProtectedRoute roles={['enfermero']}>
+                        <DashboardEnfermeria />
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/enfermeria/pacientes"
+                element={
+                    <ProtectedRoute roles={['enfermero']}>
+                        <PacientesEnfermeria />
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/enfermeria/signos-vitales"
+                element={
+                    <ProtectedRoute roles={['enfermero']}>
+                        <SignosVitales />
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/enfermeria/notas"
+                element={
+                    <ProtectedRoute roles={['enfermero']}>
+                        <NotasEnfermeria />
+                    </ProtectedRoute>
+                }
+            />
+
+            {/* Rutas compartidas */}
+            <Route
+                path="/historias-clinicas"
+                element={
+                    <ProtectedRoute roles={['medico', 'enfermero', 'admin']}>
+                        <HistoriasClinicas />
+                    </ProtectedRoute>
+                }
+            />
+            
             {/* Ruta para cualquier otra URL no definida */}
             <Route path="*" element={<Navigate to="/" />} />
         </Routes>

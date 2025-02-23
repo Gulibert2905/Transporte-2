@@ -15,17 +15,19 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
- 
   Grid
 } from '@mui/material';
 import { 
   Visibility as VisibilityIcon,
   Edit as EditIcon,
-  Delete as DeleteIcon 
+  Delete as DeleteIcon,
+  LocalHospital as LocalHospitalIcon 
 } from '@mui/icons-material';
+import { useNavigate } from 'react-router-dom';
 import axiosInstance from '../../utils/axios';
 
 function TrasladoList({ traslados, onUpdate, setError, setSuccess }) {
+  const navigate = useNavigate();
   const [detailOpen, setDetailOpen] = useState(false);
   const [selectedTraslado, setSelectedTraslado] = useState(null);
 
@@ -41,6 +43,24 @@ function TrasladoList({ traslados, onUpdate, setError, setSuccess }) {
       }
     }
   };
+
+  const handleCrearHistoria = async (trasladoId) => {
+    try {
+        // Primero verificamos si ya existe una historia
+        const response = await axiosInstance.get(`/api/historia-clinica/verificar/${trasladoId}`);
+        
+        if (response.data.exists) {
+            setError('Ya existe una historia clínica para este traslado');
+            return;
+        }
+        
+        // Si no existe, navegamos al formulario de creación
+        navigate(`/historia-clinica/crear/${trasladoId}`);
+    } catch (error) {
+        console.error('Error al redireccionar:', error);
+        setError('Error al intentar crear historia clínica');
+    }
+};
 
   const getEstadoColor = (estado) => {
     const colors = {
@@ -67,6 +87,7 @@ function TrasladoList({ traslados, onUpdate, setError, setSuccess }) {
               <TableCell>Fecha Cita</TableCell>
               <TableCell>Origen</TableCell>
               <TableCell>Destino</TableCell>
+              <TableCell>Tipo</TableCell>
               <TableCell>Estado</TableCell>
               <TableCell>Verificado</TableCell>
               <TableCell>Acciones</TableCell>
@@ -83,6 +104,13 @@ function TrasladoList({ traslados, onUpdate, setError, setSuccess }) {
                 </TableCell>
                 <TableCell>{traslado.municipio_origen}</TableCell>
                 <TableCell>{traslado.municipio_destino}</TableCell>
+                <TableCell>
+                  <Chip 
+                    label={traslado.tipo_servicio}
+                    color={traslado.tipo_servicio === 'AMBULANCIA' ? "error" : "default"}
+                    size="small"
+                  />
+                </TableCell>
                 <TableCell>
                   <Chip 
                     label={traslado.estado}
@@ -111,6 +139,16 @@ function TrasladoList({ traslados, onUpdate, setError, setSuccess }) {
                       <EditIcon />
                     </IconButton>
                   </Tooltip>
+                  {traslado.tipo_servicio === 'AMBULANCIA' && !traslado.HistoriaClinica && (
+                    <Tooltip title="Crear Historia Clínica">
+                      <IconButton
+                        color="success"
+                        onClick={() => handleCrearHistoria(traslado.id)}
+                      >
+                        <LocalHospitalIcon />
+                      </IconButton>
+                    </Tooltip>
+                  )}
                   <Tooltip title="Eliminar">
                     <IconButton 
                       color="error"
@@ -139,7 +177,14 @@ function TrasladoList({ traslados, onUpdate, setError, setSuccess }) {
             </DialogTitle>
             <DialogContent>
               <Grid container spacing={2}>
-                {/* Detalles del traslado... continuará */}
+                {/* Detalles del traslado */}
+                <Grid item xs={12} md={6}>
+                  <strong>Paciente:</strong> {selectedTraslado.Paciente?.nombres} {selectedTraslado.Paciente?.apellidos}
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <strong>Tipo de Servicio:</strong> {selectedTraslado.tipo_servicio}
+                </Grid>
+                {/* Agregar más detalles según necesites */}
               </Grid>
             </DialogContent>
             <DialogActions>

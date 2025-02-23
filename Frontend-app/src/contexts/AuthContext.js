@@ -22,24 +22,25 @@ export const AuthProvider = ({ children }) => {
     useEffect(() => {
         const validateToken = async () => {
             const token = localStorage.getItem('token');
-            if (token) {
-                try {
-                    const response = await axiosInstance.get('/auth/validate-token');
-                    if (response.data.success) {
-                        setUser(response.data.user);
-                        // Actualizar el usuario en localStorage si ha cambiado
-                        localStorage.setItem('user', JSON.stringify(response.data.user));
-                    } else {
-                        await logout();
-                    }
-                } catch (error) {
-                    console.error('Error validando token:', error);
+            if (!token) {
+                setLoading(false);
+                return;
+            }
+            
+            try {
+                const response = await axiosInstance.get('/auth/validate-token');
+                if (response.data.success) {
+                    setUser(response.data.user);
+                    localStorage.setItem('user', JSON.stringify(response.data.user));
+                } else {
                     await logout();
                 }
-            } else {
+            } catch (error) {
+                console.error('Error validando token:', error);
+                await logout();
+            } finally {
                 setLoading(false);
             }
-            setLoading(false);
         };
 
         validateToken();

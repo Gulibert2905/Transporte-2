@@ -4,33 +4,6 @@ const { Op } = require('sequelize');
 const excel = require('exceljs');
 
 
-const formatearFecha = (fecha) => {
-    if (!fecha) return '';
-    try {
-        return new Date(fecha).toLocaleString('es-CO', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric'
-        });
-    } catch (error) {
-        return fecha;
-    }
-};
-
-const formatearMoneda = (valor) => {
-    if (!valor) return '$ 0';
-    try {
-        return new Intl.NumberFormat('es-CO', {
-            style: 'currency',
-            currency: 'COP',
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 0
-        }).format(valor);
-    } catch (error) {
-        return `$ ${valor}`;
-    }
-};
-
 // Mantener los métodos existentes
 const trasladoController = {
     getAllTraslados: async (req, res) => {
@@ -61,6 +34,43 @@ const trasladoController = {
         }
     },
 
+    getTraslado: async (req, res) => {
+        try {
+            const traslado = await Traslado.findOne({
+                where: { id: req.params.id },
+                include: [{
+                    model: Paciente,
+                    as: 'Paciente',
+                    include: [{
+                        model: Usuario,
+                        as: 'Operador',
+                        attributes: ['id', 'username']
+                    }]
+                }, {
+                    model: Usuario,
+                    as: 'Operador',
+                    attributes: ['id', 'username']
+                }, {
+                    model: Usuario,
+                    as: 'Auditor',
+                    attributes: ['id', 'username']
+                }]
+            });
+    
+            if (!traslado) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Traslado no encontrado'
+                });
+            }
+    
+            res.json(traslado);
+        } catch (error) {
+            console.error('Error al obtener traslado:', error);
+            res.status(500).json({ message: error.message });
+        }
+    },
+    
     createTraslado: async (req, res) => {
         try {
             console.log('Datos recibidos:', req.body);
@@ -77,6 +87,7 @@ const trasladoController = {
                 num_pasajeros,
                 num_traslados,
                 tipo_transporte,
+                tipo_servicio,
                 valor_traslado,
                 valor_total
             } = req.body;
@@ -104,7 +115,8 @@ const trasladoController = {
                 ruta_id,
                 num_pasajeros,
                 num_traslados,
-                tipo_traslado: 'MUNICIPAL', // o 'TICKET' según corresponda
+                tipo_traslado: 'MUNICIPAL', 
+                tipo_servicio: tipo_servicio || 'BASICO',
                 tipo_transporte,
                 valor_traslado,
                 valor_total,
@@ -127,7 +139,6 @@ const trasladoController = {
             });
         }
     },
-
 
     updateTraslado: async (req, res) => {
         try {
@@ -267,16 +278,16 @@ const trasladoController = {
 
     getReporteTraslados: async (req, res) => {
         try {
-            const { fechaInicio, fechaFin, tipo, estado } = req.query;
+            const { fechaInicio, fechaFin } = req.query;
             
-            let whereCondition = {};
+            const whereCondition = {};
             
             if (fechaInicio && fechaFin) {
                 whereCondition.fecha_cita = {
                     [Op.between]: [new Date(fechaInicio), new Date(fechaFin)]
                 };
             }
-
+    
             const traslados = await Traslado.findAll({
                 where: whereCondition,
                 include: [{
@@ -290,11 +301,11 @@ const trasladoController = {
                 }],
                 order: [['fecha_cita', 'DESC']]
             });
-
+    
             // Crear workbook y worksheet
             const workbook = new excel.Workbook();
             const worksheet = workbook.addWorksheet('Traslados');
-
+    
             // Definir columnas
             worksheet.columns = [
                 { header: 'Nombres', key: 'nombres', width: 15 },
@@ -309,7 +320,7 @@ const trasladoController = {
                 { header: 'Verificado', key: 'verificado', width: 15 },
                 { header: 'Auditor', key: 'auditor', width: 15 }
             ];
-
+    
             // Formatear datos
             const trasladosFormateados = traslados.map(t => ({
                 nombres: t.Paciente?.nombres || '',
@@ -324,10 +335,10 @@ const trasladoController = {
                 verificado: t.verificado_auditor ? 'Sí' : 'No',
                 auditor: t.Auditor?.username || ''
             }));
-
+    
             // Agregar filas
             worksheet.addRows(trasladosFormateados);
-
+    
             // Configurar respuesta
             res.setHeader(
                 'Content-Type', 
@@ -337,11 +348,11 @@ const trasladoController = {
                 'Content-Disposition', 
                 'attachment; filename=reporte-traslados.xlsx'
             );
-
+    
             // Escribir el archivo y enviarlo
             await workbook.xlsx.write(res);
             res.end();
-
+    
         } catch (error) {
             console.error('Error al generar reporte:', error);
             res.status(500).json({

@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { authenticateToken } = require('../middleware/auth'); // Añadido
 const { Usuario } = require('../models');
+const authController = require('../controllers/authController');
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const { logger } = require('../services/logger');
@@ -42,7 +43,8 @@ router.post('/login', async (req, res) => {
         );
 
         logger.info('Login exitoso:', { username, rol: user.rol });
-
+        res.header('Access-Control-Allow-Origin', req.headers.origin);
+        res.header('Access-Control-Allow-Credentials', 'true');
         res.json({
             success: true,
             token,
@@ -124,6 +126,18 @@ router.post('/change-password', authenticateToken, async (req, res) => {
             success: false, 
             message: 'Error al cambiar contraseña',
             error: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
+    }
+});
+
+router.post('/logout', authenticateToken, async (req, res) => {
+    try {
+        await authController.logout(req, res);
+    } catch (error) {
+        logger.error('Error en ruta logout:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error al procesar el logout'
         });
     }
 });

@@ -35,7 +35,24 @@ const transaccionesRoutes = require('./routes/transaccionesRoutes');
 const userRoutes = require('./routes/userRoutes');
 const pacienteRoutes = require('./routes/pacienteRoutes'); 
 const trasladoRoutes = require('./routes/trasladoRoutes');
-
+const medicoRoutes = require('./routes/medicoRoutes');
+const historiaClinicaRoutes = require('./routes/historiaClinica');
+const enfermeriaRoutes = require('./routes/enfermeriaRoutes');
+const corsOptions = {
+  origin: process.env.NODE_ENV === 'production' 
+      ? process.env.FRONTEND_URL 
+      : ['http://localhost:3001', 'http://localhost:3002'],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+  exposedHeaders: ['Content-Length', 'X-Requested-With']
+};
+const fixApiRoutes = (req, res, next) => {
+  if (req.url.startsWith('/api/api/')) {
+      req.url = req.url.replace('/api/api/', '/api/');
+  }
+  next();
+};
 const app = express();
 
 // Middleware básicos
@@ -44,12 +61,7 @@ app.use(helmet({
 }));
 app.use(morgan('dev'));
 
-app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'http://localhost:3001',
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT','PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
-}));
+app.use(cors(corsOptions));
 
 app.use(compression());
 app.use(express.json());
@@ -58,6 +70,59 @@ app.use(requestLogger);
 
 // Rutas públicas
 app.use('/api/auth', authRoutes);
+app.use(fixApiRoutes);
+
+// Rutas para personal médico con roles múltiples
+app.use('/api/medico', authenticateToken, authorize('medico'), medicoRoutes);
+app.use('/api/historia-clinica', 
+  authenticateToken,
+  (req, res, next) => {
+      console.log('Role del usuario:', req.user?.rol); // Mantener para debugging
+      const allowedRoles = ['medico', 'enfermero', 'admin', 'MEDICO', 'ENFERMERO', 'ADMIN'];
+      if (!req.user) {
+          return res.status(401).json({
+              success: false,
+              message: 'Usuario no autenticado'
+          });
+      }
+
+      // Normalizar el rol a minúsculas para la comparación
+      const userRole = req.user.rol.toLowerCase();
+      const normalizedAllowedRoles = allowedRoles.map(role => role.toLowerCase());
+
+      if (normalizedAllowedRoles.includes(userRole)) {
+          console.log('Acceso permitido para:', userRole); // Para debugging
+          next();
+      } else {
+          console.log('Acceso denegado para:', userRole); // Para debugging
+          res.status(403).json({
+              success: false,
+              message: 'No tienes permisos para esta acción'
+          });
+      }
+  },
+  historiaClinicaRoutes
+);
+
+// Rutas para enfermería
+app.use('/api/enfermeria', 
+    authenticateToken, 
+    authorize('enfermero'), 
+    enfermeriaRoutes
+);
+
+// Rutas compartidas
+app.use('/api/pacientes', 
+    authenticateToken, 
+    authorize('medico', 'enfermero', 'admin'), 
+    pacienteRoutes
+);
+
+app.use('/api/traslados', 
+    authenticateToken, 
+    authorize('medico', 'enfermero', 'admin'), 
+    trasladoRoutes
+);
 
 // Rutas de contabilidad - agregar authorize para contador y admin
 app.use('/api/contabilidad', authenticateToken, authorize('contador', 'admin'), contabilidadRoutes);
@@ -80,38 +145,49 @@ app.use('/api/tarifas', authenticateToken, tarifasRoutes);
 app.use('/api/viajes', authenticateToken, viajesRoutes);
 app.use('/api/reportes', authenticateToken, reportesRoutes);
 app.use('/api/dashboard', authenticateToken, dashboardRoutes);
-app.use('/api/pacientes', authenticateToken, pacienteRoutes);
-app.use('/api/traslados', authenticateToken, trasladoRoutes);
 
-// Manejador de rutas no encontradas
-app.use((req, res) => {
-  logger.debug(`Ruta no encontrada: ${req.method} ${req.url}`);
-  res.status(404).json({
-    error: {
-      message: 'Ruta no encontrada',
-      path: req.url,
-      method: req.method
-    }
+app.get('/unauthorized', (req, res) => {
+  res.status(403).json({
+      success: false,
+      message: 'No tienes permisos para acceder a este recurso'
   });
 });
 
+// Manejador de rutas no encontradas
+app.use((req, res) => {
+  logger.warn(`Ruta no encontrada: ${req.method} ${req.url} - Usuario: ${req.user?.username}, Rol: ${req.user?.rol}`);
+  res.status(404).json({
+      success: false,
+      error: {
+          message: 'Ruta no encontrada',
+          path: req.url,
+          method: req.method
+      }
+  });
+});
 
-// Manejo de errores
 app.use((err, req, res, next) => {
+  const status = err.status || 500;
+  const message = status === 401 ? 'No autorizado' : 
+                  status === 403 ? 'Acceso prohibido' :
+                  process.env.NODE_ENV === 'production' ? 'Error interno del servidor' : err.message;
+
   logger.error({
-    message: err.message,
-    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
-    path: req.path,
-    method: req.method,
-    body: req.body
+      message: err.message,
+      stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
+      path: req.path,
+      method: req.method,
+      user: req.user?.username,
+      rol: req.user?.rol,
+      body: req.body
   });
 
-  res.status(err.status || 500).json({
-    error: {
-      message: process.env.NODE_ENV === 'production'
-        ? 'Error interno del servidor'
-        : err.message
-    }
+  res.status(status).json({
+      success: false,
+      error: {
+          message,
+          ...(process.env.NODE_ENV === 'development' && { details: err.message })
+      }
   });
 });
 

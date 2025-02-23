@@ -28,7 +28,14 @@ module.exports = (sequelize, DataTypes) => {
           model: 'usuarios',
           key: 'id'
         }
-      }
+      },
+      medico_id: {  // Agregar este campo
+        type: DataTypes.INTEGER,
+        references: {
+            model: 'usuarios',
+            key: 'id'
+        }
+    }
     });
   
     Paciente.associate = (models) => {
@@ -40,6 +47,10 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'paciente_id',
         as: 'Traslados'
       });
+      Paciente.belongsTo(models.Usuario, {
+        foreignKey: 'medico_id',
+        as: 'Medico'
+    });
     };
   
     return Paciente;

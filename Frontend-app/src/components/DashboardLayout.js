@@ -2,10 +2,12 @@ import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Box, Drawer, List, ListItem, ListItemIcon, ListItemText, Typography, Divider, Avatar } from '@mui/material';
 import { 
-    Users, 
+   
     Truck, 
     Map, 
     DollarSign, 
+    FileText,
+    Thermometer,
     Activity,
     LogOut,
     Calculator,
@@ -14,6 +16,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { 
+    LocalHospital, // Cambiado de HistoriaClinicaIcon
     PersonOutline,
     TransferWithinAStation,
     AssignmentTurnedIn,
@@ -52,6 +55,13 @@ const DashboardLayout = ({ children }) => {
             path: '/auditor/verificacion',
             icon: <AssignmentTurnedIn />,
             roles: ['auditor']
+        },
+        // Agregar el menú de Historias Clínicas después de Traslados
+        {
+            title: 'Historias Clínicas',
+            path: '/historias-clinicas',
+            icon: <LocalHospital />,
+            roles: ['admin', 'medico', 'enfermero', 'auditor']
         },
         {
             title: 'Reportes de Traslados',
@@ -104,7 +114,57 @@ const DashboardLayout = ({ children }) => {
             path: '/users',
             icon: <UserPlus />,
             roles: ['admin']
-        }
+        },
+        // Menú para médicos
+    {
+        title: 'Dashboard Médico',
+        path: '/medico/dashboard',
+        icon: <Activity />,
+        roles: ['medico']
+    },
+    {
+        title: 'Mis Pacientes',
+        path: '/medico/pacientes',
+        icon: <PersonOutline />,
+        roles: ['medico']
+    },
+    {
+        title: 'Consultas',
+        path: '/medico/consultas',
+        icon: <LocalHospital />,
+        roles: ['medico']
+    },
+
+    // Menú para enfermeros
+    {
+        title: 'Dashboard Enfermería',
+        path: '/enfermeria/dashboard',
+        icon: <Activity />,
+        roles: ['enfermero']
+    },
+    {
+        title: 'Pacientes Asignados',
+        path: '/enfermeria/pacientes',
+        icon: <PersonOutline />,
+        roles: ['enfermero']
+    },
+    {
+        title: 'Signos Vitales',
+        path: '/enfermeria/signos-vitales',
+        icon: <Thermometer/>,
+        roles: ['enfermero']
+    },
+    {
+        title: 'Notas de Enfermería',
+        path: '/enfermeria/notas',
+        icon: <FileText/>,
+        roles: ['enfermero']
+    }
+
+    
+        
+
+        
     ];
 
     const handleLogout = () => {

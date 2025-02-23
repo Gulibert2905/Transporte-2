@@ -1,73 +1,55 @@
+// config/config.js
 const path = require('path');
+require('dotenv').config();
 
 const getConfig = () => {
-    // Asegurarse de que estamos usando el archivo .env correcto
+    // Cargar el archivo .env correcto
     require('dotenv').config({
         path: path.join(__dirname, '..', `.env.${process.env.NODE_ENV || 'development'}`)
     });
 
-    const baseConfig = {
-        app: {
-            name: 'CEMEDIC',
-            port: process.env.PORT || 3000,
-            apiUrl: process.env.REACT_APP_API_URL,
-            env: process.env.NODE_ENV || 'development',
-        },
-        db: {
-            host: process.env.DB_HOST,
-            user: process.env.DB_USER,
-            password: process.env.DB_PASSWORD,
-            database: process.env.DB_NAME,
+    return {
+        development: {
+            username: process.env.DB_USER || 'root',
+            password: process.env.DB_PASSWORD || '',
+            database: process.env.DB_NAME || 'cemedic',
+            host: process.env.DB_HOST || 'localhost',
             dialect: 'mysql',
-            logging: process.env.NODE_ENV !== 'production',
+            logging: true,
             dialectOptions: {
                 dateStrings: true,
                 typeCast: true
             },
             timezone: '+00:00'
         },
-        jwt: {
-            secret: process.env.JWT_SECRET,
-            expiresIn: '24h'
-        },
-        cors: {
-            origin: process.env.CORS_ORIGIN,
-            credentials: true
-        }
-    };
-
-    const envConfig = {
-        development: {
-            ...baseConfig,
-            app: {
-                ...baseConfig.app,
-                isDev: true
-            },
-            db: {
-                ...baseConfig.db,
-                logging: console.log
-            }
-        },
         production: {
-            ...baseConfig,
-            app: {
-                ...baseConfig.app,
-                isDev: false
+            username: process.env.DB_USER || 'root',
+            password: process.env.DB_PASSWORD || '',
+            database: process.env.DB_NAME || 'cemedic',
+            host: process.env.DB_HOST || 'localhost',
+            dialect: 'mysql',
+            logging: false,
+            dialectOptions: {
+                dateStrings: true,
+                typeCast: true
             },
-            db: {
-                ...baseConfig.db,
-                logging: false,
-                pool: {
-                    max: 5,
-                    min: 0,
-                    acquire: 30000,
-                    idle: 10000
-                }
+            timezone: '+00:00',
+            pool: {
+                max: 5,
+                min: 0,
+                acquire: 30000,
+                idle: 10000
             }
         }
     };
-
-    return envConfig[process.env.NODE_ENV || 'development'];
 };
+
+// Debug
+console.log('Database Configuration:', {
+    host: process.env.DB_HOST,
+    database: process.env.DB_NAME,
+    dialect: 'mysql',
+    user: process.env.DB_USER
+});
 
 module.exports = getConfig();

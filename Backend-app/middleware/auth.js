@@ -7,7 +7,9 @@ const ROLES = {
     ADMIN: 'admin',
     OPERADOR: 'operador',
     AUDITOR: 'auditor',
-    CONTADOR: 'contador'
+    CONTADOR: 'contador',
+    MEDICO: 'medico',
+    ENFERMERO: 'enfermero'
 };
 
 const authenticateToken = async (req, res, next) => {
@@ -23,8 +25,6 @@ const authenticateToken = async (req, res, next) => {
         }
 
         const token = authHeader.split(' ')[1];
-        logger.info('Token recibido para autenticación');
-
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
         const user = await Usuario.findOne({
             where: {
@@ -55,59 +55,45 @@ const authenticateToken = async (req, res, next) => {
     }
 };
 
-// Función mejorada de autorización
+// Función de autorización simplificada
 const authorize = (...allowedRoles) => {
     return (req, res, next) => {
-        const path = req.path;
         const userRole = req.user?.rol;
-        const username = req.user?.username;
-
-        logger.info(`Verificando autorización para ${username} (${userRole}) en ruta: ${path}`);
-        logger.info(`Roles permitidos: ${allowedRoles.join(',')}`);
-
-        if (!req.user) {
-            logger.warn('No hay usuario autenticado');
-            return res.status(401).json({
-                success: false,
-                message: 'No autorizado'
-            });
-        }
-
-        // El admin siempre tiene acceso
+        
+        // Admin siempre tiene acceso
         if (userRole === ROLES.ADMIN) {
-            logger.info(`Acceso concedido para admin en ruta: ${path}`);
             return next();
         }
 
-        // Verificar si el rol del usuario está en los roles permitidos
+        // Verificar si el rol está permitido
         if (allowedRoles.includes(userRole)) {
-            // Si es auditor y la ruta es de verificación, verificar permisos específicos
-            if (userRole === ROLES.AUDITOR && path.includes('verificacion')) {
-                const tienePermiso = verificarPermisoAuditor(req);
-                if (tienePermiso) {
-                    logger.info(`Acceso concedido para auditor en ruta: ${path}`);
-                    return next();
-                }
-                logger.warn(`Acceso denegado para auditor en ruta: ${path}`);
-                return res.status(403).json({
-                    success: false,
-                    message: 'El auditor no tiene permiso para acceder a este recurso'
-                });
-            }
-
-            // Para otros roles permitidos
-            logger.info(`Acceso concedido para ${userRole} en ruta: ${path}`);
             return next();
         }
 
-        logger.warn(`Acceso denegado para ${username} (${userRole}) en ruta: ${path}`);
+        logger.warn(`Acceso denegado para ${req.user?.username} (${userRole}) en ruta: ${req.originalUrl}`);
         return res.status(403).json({
             success: false,
-            message: 'No tiene permisos para esta acción'
+            message: 'No tienes permisos para esta acción'
         });
     };
 };
 
+// Middleware de verificación de permisos específicos
+const verificarPermiso = (permiso) => {
+    return (req, res, next) => {
+        const permisos = getPermisosPorRol(req.user?.rol);
+        
+        if (req.user?.rol === ROLES.ADMIN || permisos.includes(permiso)) {
+            return next();
+        }
+
+        logger.warn(`Usuario sin permiso "${permiso}": ${req.user?.username}`);
+        return res.status(403).json({
+            success: false,
+            message: `Se requiere el permiso: ${permiso}`
+        });
+    };
+};
 
 // Función para obtener permisos según el rol
 const getPermisosPorRol = (rol) => {
@@ -137,54 +123,25 @@ const getPermisosPorRol = (rol) => {
             'editar_rutas',
             'ver_tarifas',
             'editar_tarifas'
+        ],
+        [ROLES.MEDICO]: [
+            'ver_pacientes',
+            'crear_historia_clinica',
+            'editar_historia_clinica',
+            'ver_historia_clinica',
+            'crear_consulta',
+            'ver_consultas'
+        ],
+        [ROLES.ENFERMERO]: [
+            'ver_pacientes',
+            'registrar_signos_vitales',
+            'ver_historia_clinica',
+            'crear_notas_enfermeria',
+            'ver_notas_enfermeria'
         ]
     };
 
     return permisos[rol] || [];
-};
-
-// Función para verificar permisos específicos del auditor
-const verificarPermisoAuditor = (req) => {
-    const rutasPermitidas = [
-        '/verificacion/pendientes',
-        '/verificacion/estadisticas',
-        '/verificacion/reportes',
-        '/verificacion',
-        '/traslados/verificacion',
-        '/reporte'
-    ];
-    
-    const path = req.path.toLowerCase();
-    
-    // Verificar si la ruta es de verificación de un traslado específico
-    const esVerificacionTraslado = /^\/verificacion\/\d+$/.test(path);
-    if (esVerificacionTraslado) {
-        return true;
-    }
-
-    // Verificar si es una ruta de reporte
-    if (path.startsWith('/reporte')) {
-        return true;
-    }
-
-    return rutasPermitidas.some(ruta => path.includes(ruta.toLowerCase()));
-};
-
-// Middleware para verificar permisos específicos
-const verificarPermiso = (permiso) => {
-    return (req, res, next) => {
-        const permisos = getPermisosPorRol(req.user?.rol);
-        
-        if (req.user?.rol === ROLES.ADMIN || permisos.includes(permiso)) {
-            return next();
-        }
-
-        logger.warn(`Usuario sin permiso "${permiso}": ${req.user?.username}`);
-        return res.status(403).json({
-            success: false,
-            message: `Se requiere el permiso: ${permiso}`
-        });
-    };
 };
 
 module.exports = {

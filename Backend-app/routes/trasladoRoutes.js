@@ -3,6 +3,9 @@ const router = express.Router();
 const { authenticateToken, authorize, verificarPermiso } = require('../middleware/auth');
 const trasladoController = require('../controllers/trasladoController');
 
+
+router.get('/:id', trasladoController.getTraslado);
+
 // Rutas accesibles para admin, operador y auditor
 router.get('/', 
     authenticateToken,

@@ -1,6 +1,6 @@
 const db = require('../models');
-const { Sequelize, Op } = db.Sequelize;
-const { Viaje, Prestador, Ruta, Tarifa } = db;
+const { Sequelize} = db.Sequelize;
+const { Viaje, Prestador, Ruta } = db;
 
 exports.getDashboardData = async (req, res) => {
   try {

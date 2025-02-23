@@ -1,6 +1,6 @@
 // controllers/librodiarioController.js
-const { LibroDiario, DetalleAsiento, MovimientoCuenta, Cuenta } = require('../models');
-
+const { LibroDiario, DetalleAsiento, MovimientoCuenta,Cuenta } = require('../models');
+const { Op } = require('sequelize');
 exports.obtenerLibroDiario = async (req, res) => {
   try {
     const { fechaInicio, fechaFin, page = 1, limit = 10 } = req.query;

@@ -1,5 +1,5 @@
 const { Cuenta, sequelize } = require('../models');
-const { Op } = require('sequelize');
+
 
 exports.crearCuenta = async (req, res) => {
   const transaction = await sequelize.transaction();
