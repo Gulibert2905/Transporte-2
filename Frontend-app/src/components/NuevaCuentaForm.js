@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import axiosInstance from '../utils/axios'; 
 import { TextField, MenuItem, Button, Grid, Paper, Typography } from '@mui/material';
 
 function NuevaCuentaForm({ onCuentaCreada }) {
@@ -8,7 +8,7 @@ function NuevaCuentaForm({ onCuentaCreada }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post('/api/cuenta', cuenta);
+      const res = await axiosInstance.post('/api/cuenta', cuenta);
       onCuentaCreada(res.data);
       setCuenta({ codigo: '', nombre: '', tipo: 'ACTIVO' });
     } catch (error) {

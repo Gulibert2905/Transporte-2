@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import axiosInstance from '../utils/axios'; 
 import { 
   Container, Typography, TextField, Button, Table, TableBody, 
   TableCell, TableContainer, TableHead, TableRow, Paper, Select, 
@@ -29,7 +29,7 @@ const NotaContabilidad = () => {
 
   const cargarCuentas = async () => {
     try {
-      const response = await axios.get('/api/cuenta');
+      const response = await axiosInstance.get('/api/cuenta');
       setCuentas(response.data);
     } catch (error) {
       console.error('Error al cargar cuentas:', error);
@@ -95,7 +95,7 @@ const NotaContabilidad = () => {
   
     try {
       console.log('Enviando nota de contabilidad:', notaContabilidad);
-      const response = await axios.post('/api/notas-contabilidad', notaContabilidad);
+      const response = await axiosInstance.post('/api/notas-contabilidad', notaContabilidad);
       console.log('Respuesta del servidor:', response.data);
       setSnackbar({ open: true, message: 'Nota de contabilidad creada con éxito', severity: 'success' });
       setNotaContabilidad({ numero: '', fecha: new Date().toISOString().split('T')[0], concepto: '', detalles: [] });

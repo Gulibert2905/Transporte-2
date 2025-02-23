@@ -21,6 +21,8 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.DECIMAL(10, 2),
       allowNull: false
     }
+  }, {
+    timestamps: true // Esto añadirá createdAt y updatedAt automáticamente
   });
 
   return ReciboCaja;

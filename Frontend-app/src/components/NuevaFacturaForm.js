@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import axiosInstance from '../utils/axios'; 
 import { 
   Box, 
   Typography, 
@@ -28,7 +28,7 @@ function NuevaFacturaForm({ onFacturaCreada }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post('/api/contabilidad/facturas', factura);
+      const res = await axiosInstance.post('/api/contabilidad/facturas', factura);
       onFacturaCreada(res.data);
       setFactura({ numero: '', fecha: '', cliente: '', total: '', estado: 'PENDIENTE' });
       setSuccess('Factura creada exitosamente');

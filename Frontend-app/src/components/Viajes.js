@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import axiosInstance from '../utils/axios';
 import {
   Box,
   Button,
@@ -60,8 +60,8 @@ function Viajes() {
 
   const fetchViajes = async (page = 1) => {
     try {
-      setLoading(true);
-      let url = `http://localhost:3000/api/viajes?page=${page}&limit=10`;
+        setLoading(true);
+        let url = `/viajes?page=${page}&limit=10`;
 
       if (searchTerm) url += `&search=${searchTerm}`;
       if (filters.prestador) url += `&prestador=${filters.prestador}`;
@@ -71,107 +71,114 @@ function Viajes() {
       if (filters.tarifaMinima) url += `&tarifaMinima=${filters.tarifaMinima}`;
       if (filters.tarifaMaxima) url += `&tarifaMaxima=${filters.tarifaMaxima}`;
 
-      const response = await axios.get(url);
-      setViajesData(response.data);
-      setLoading(false);
+      const response = await axiosInstance.get(url);
+        setViajesData(response.data);
+        setLoading(false);
     } catch (err) {
-      setError('Error al cargar los viajes');
-      setLoading(false);
-      console.error('Error fetching viajes:', err);
+        setError('Error al cargar los viajes');
+        setLoading(false);
+        console.error('Error fetching viajes:', err);
     }
-  };
+};
 
-  const fetchPrestadores = async () => {
-    try {
-      const response = await axios.get('http://localhost:3000/api/prestadores');
-      setPrestadores(response.data.prestadores);
-    } catch (err) {
-      console.error('Error fetching prestadores:', err);
-    }
-  };
+const fetchPrestadores = async () => {
+  try {
+    const response = await axiosInstance.get('/prestadores');
+    setPrestadores(response.data.prestadores);
+  } catch (err) {
+    console.error('Error fetching prestadores:', err);
+  }
+};
 
-  const fetchRutas = async () => {
-    try {
-      const response = await axios.get('http://localhost:3000/api/rutas');
-      setRutas(response.data.rutas);
-    } catch (err) {
-      console.error('Error fetching rutas:', err);
-    }
-  };
+const fetchRutas = async () => {
+  try {
+    const response = await axiosInstance.get('/rutas');
+    setRutas(response.data.rutas);
+  } catch (err) {
+    console.error('Error fetching rutas:', err);
+  }
+};
 
-  const handleInputChange = async (e) => {
-    const { name, value } = e.target;
-    setNewViaje((prev) => ({ ...prev, [name]: value }));
+const handleInputChange = async (e) => {
+  const { name, value } = e.target;
+  setNewViaje((prev) => ({ ...prev, [name]: value }));
 
-    if (name === 'prestador_nit' || name === 'ruta_id') {
+  if (name === 'prestador_nit' || name === 'ruta_id') {
       const updatedViaje = { ...newViaje, [name]: value };
       if (updatedViaje.prestador_nit && updatedViaje.ruta_id) {
-        try {
-          const response = await axios.get(
-            `http://localhost:3000/api/tarifas/by-prestador-ruta`,
-            {
-              params: {
-                prestador_nit: updatedViaje.prestador_nit,
-                ruta_id: updatedViaje.ruta_id,
-              },
-            }
-          );
-          if (response.data && response.data.tarifa) {
-            setNewViaje((prev) => ({
-              ...prev,
-              [name]: value,
-              tarifa_aplicada: response.data.tarifa,
-            }));
-            setTarifaCargada(true);
-            setError(null);
-          } else {
-            setNewViaje((prev) => ({ ...prev, [name]: value, tarifa_aplicada: '' }));
-            setTarifaCargada(false);
-            setError('No se encontró una tarifa para este prestador y ruta');
+          try {
+              console.log('Consultando tarifa para:', {
+                  prestador: updatedViaje.prestador_nit,
+                  ruta: updatedViaje.ruta_id
+              });
+
+              const response = await axiosInstance.get('/tarifas/by-prestador-ruta', {
+                  params: {
+                      prestador_nit: updatedViaje.prestador_nit,
+                      ruta_id: updatedViaje.ruta_id,
+                  },
+              });
+
+              console.log('Respuesta de tarifa:', response.data); // Debug
+
+              if (response.data && response.data.tarifa) {
+                  setNewViaje((prev) => ({
+                      ...prev,
+                      [name]: value,
+                      tarifa_aplicada: response.data.tarifa,
+                  }));
+                  setTarifaCargada(true);
+                  setError(null);
+              } else {
+                  setNewViaje((prev) => ({ 
+                      ...prev, 
+                      [name]: value, 
+                      tarifa_aplicada: '' 
+                  }));
+                  setTarifaCargada(false);
+                  setError('No se encontró una tarifa para este prestador y ruta');
+              }
+          } catch (error) {
+              console.error('Error al obtener la tarifa:', error.response || error);
+              setNewViaje((prev) => ({ 
+                  ...prev, 
+                  [name]: value, 
+                  tarifa_aplicada: '' 
+              }));
+              setTarifaCargada(false);
+              setError('Error al obtener la tarifa. Por favor, intente de nuevo.');
           }
-        } catch (error) {
-          console.error('Error al obtener la tarifa:', error);
-          setNewViaje((prev) => ({ ...prev, [name]: value, tarifa_aplicada: '' }));
-          setTarifaCargada(false);
-          setError('Error al obtener la tarifa. Por favor, intente de nuevo.');
-        }
       }
-    }
-  };
+  }
+};
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError(null);
 
-    if (!newViaje.prestador_nit || !newViaje.ruta_id) {
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setError(null);
+
+  if (!newViaje.prestador_nit || !newViaje.ruta_id) {
       setError('Por favor, seleccione un prestador y una ruta');
       return;
-    }
+  }
 
-    if (!tarifaCargada || !newViaje.tarifa_aplicada) {
-      setError(
-        'La tarifa no se ha cargado correctamente. Por favor, seleccione un prestador y una ruta válidos'
-      );
-      return;
-    }
-
-    try {
-      await axios.post('http://localhost:3000/api/viajes', newViaje);
+  try {
+      await axiosInstance.post('/viajes', newViaje);
       setNewViaje({
-        prestador_nit: '',
-        ruta_id: '',
-        fecha_viaje: '',
-        tarifa_aplicada: '',
+          prestador_nit: '',
+          ruta_id: '',
+          fecha_viaje: '',
+          tarifa_aplicada: '',
       });
       setTarifaCargada(false);
       fetchViajes(1);
       setSuccess('Viaje añadido exitosamente');
       setError(null);
-    } catch (err) {
+  } catch (err) {
       console.error('Error creating viaje:', err);
       setError('Error al crear el viaje: ' + (err.response?.data?.message || err.message));
-    }
-  };
+  }
+};
 
   const handlePageChange = (event, newPage) => {
     fetchViajes(newPage);
@@ -205,47 +212,54 @@ function Viajes() {
 
   const exportCSV = async () => {
     try {
-      let url = `http://localhost:3000/api/viajes/export/csv?`;
-      if (searchTerm) url += `&search=${searchTerm}`;
-      Object.keys(filters).forEach((key) => {
-        if (filters[key]) url += `&${key}=${filters[key]}`;
-      });
+        const params = new URLSearchParams();
+        if (searchTerm) params.append('search', searchTerm);
+        Object.keys(filters).forEach((key) => {
+            if (filters[key]) params.append(key, filters[key]);
+        });
 
-      const response = await axios.get(url, { responseType: 'blob' });
-      const downloadUrl = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = downloadUrl;
-      link.setAttribute('download', 'viajes.csv');
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
+        const response = await axiosInstance.get(`/viajes/export/csv`, {
+            params,
+            responseType: 'blob'
+        });
+        const downloadUrl = window.URL.createObjectURL(new Blob([response.data]));
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.setAttribute('download', 'viajes.csv');
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
     } catch (error) {
-      console.error('Error exporting CSV:', error);
-      setError('Error al exportar CSV');
+        console.error('Error exporting CSV:', error);
+        setError('Error al exportar CSV');
     }
-  };
+};
 
-  const exportExcel = async () => {
+// Corregir exportExcel similar al exportCSV
+const exportExcel = async () => {
     try {
-      let url = `http://localhost:3000/api/viajes/export/excel?`;
-      if (searchTerm) url += `&search=${searchTerm}`;
-      Object.keys(filters).forEach((key) => {
-        if (filters[key]) url += `&${key}=${filters[key]}`;
-      });
+        const params = new URLSearchParams();
+        if (searchTerm) params.append('search', searchTerm);
+        Object.keys(filters).forEach((key) => {
+            if (filters[key]) params.append(key, filters[key]);
+        });
 
-      const response = await axios.get(url, { responseType: 'blob' });
-      const downloadUrl = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = downloadUrl;
-      link.setAttribute('download', 'viajes.xlsx');
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
+        const response = await axiosInstance.get(`/viajes/export/excel`, {
+            params,
+            responseType: 'blob'
+        });
+        const downloadUrl = window.URL.createObjectURL(new Blob([response.data]));
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.setAttribute('download', 'viajes.xlsx');
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
     } catch (error) {
-      console.error('Error exporting Excel:', error);
-      setError('Error al exportar Excel');
+        console.error('Error exporting Excel:', error);
+        setError('Error al exportar Excel');
     }
-  };
+};
 
   if (loading) return <CircularProgress />;
 

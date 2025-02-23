@@ -6,6 +6,7 @@ module.exports = (sequelize, DataTypes) => {
     static associate(models) {
       Prestador.hasMany(models.Tarifa, { foreignKey: 'prestador_nit', as: 'Tarifas' });
       Prestador.hasMany(models.Viaje, { foreignKey: 'prestador_nit', as: 'Viajes' });
+      Prestador.belongsToMany(models.Ruta, { through: models.Tarifa, foreignKey: 'prestador_nit', otherKey: 'ruta_id' });
     }
   }
   
@@ -19,7 +20,17 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: false
     },
-    contacto: DataTypes.STRING
+    contacto: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: {
+        isCelular(value) {
+          if (!value.match(/^3\d{9}$/)) {
+            throw new Error('El contacto debe ser un número de celular válido (10 dígitos comenzando con 3)');
+          }
+        }
+      }
+    }
   }, {
     sequelize,
     modelName: 'Prestador',

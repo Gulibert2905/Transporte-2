@@ -18,7 +18,7 @@ exports.getAllTarifas = async (req, res) => {
         { model: Prestador, as: 'Prestador' },
         { model: Ruta, as: 'Ruta' }
       ],
-      order: [['id', 'ASC']]
+      order: [['prestador_nit', 'ASC'], ['ruta_id', 'ASC']] // Cambiado aquí
     });
 
     res.json({

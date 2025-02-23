@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import axiosInstance from '../utils/axios'; 
 import { 
   Container, Typography, TextField, Button, Table, 
   TableBody, TableCell, TableContainer, TableHead, TableRow, Paper 
@@ -15,7 +15,7 @@ const GestionCuentas = () => {
 
   const cargarCuentas = async () => {
     try {
-      const response = await axios.get('/api/cuenta');
+      const response = await axiosInstance.get('/api/cuenta');
       setCuentas(response.data);
     } catch (error) {
       console.error('Error al cargar cuentas:', error);

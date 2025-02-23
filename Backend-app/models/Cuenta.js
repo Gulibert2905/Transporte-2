@@ -14,24 +14,23 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false
     },
     saldo: {
-      type: DataTypes.DECIMAL(10, 2),
-      defaultValue: 0
+      type: DataTypes.DECIMAL(15, 2),
+      allowNull: false,
+      defaultValue: 0.00,
+      get() {
+        const value = this.getDataValue('saldo');
+        return value === null ? 0.00 : parseFloat(value);
+      },
+      set(value) {
+        this.setDataValue('saldo', parseFloat(value) || 0.00);
+      }
     },
     cuentaPadreId: {
       type: DataTypes.INTEGER,
       allowNull: true
     }
   }, {
-    tableName: 'Cuenta',
-    indexes: [
-      {
-        unique: true,
-        fields: ['codigo']
-      },
-      {
-        fields: ['cuentaPadreId']
-      }
-    ]
+    tableName: 'Cuenta'
   });
 
   Cuenta.associate = (models) => {
@@ -43,10 +42,7 @@ module.exports = (sequelize, DataTypes) => {
       as: 'cuentaPadre',
       foreignKey: 'cuentaPadreId'
     });
-    Cuenta.hasMany(models.MovimientoCuenta, { 
-      foreignKey: 'cuentaId',
-      as: 'movimientos'
-    });
+    Cuenta.hasMany(models.MovimientoCuenta, { foreignKey: 'cuentaId', as: 'movimientos' });
   };
 
   return Cuenta;

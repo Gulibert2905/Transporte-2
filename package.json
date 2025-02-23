@@ -1,0 +1,9 @@
+{
+  "devDependencies": {
+    "sequelize-cli": "^6.6.2"
+  },
+  "dependencies": {
+    "exceljs": "^4.4.0",
+    "sequelize": "^6.37.4"
+  }
+}
